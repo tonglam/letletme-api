@@ -12,6 +12,7 @@ import {
 } from './middlewares/betterAuth';
 import { httpLoggerMiddleware } from './middlewares/httpLogger';
 import { redis } from './redis/client';
+import { v1Routes } from './routes/v1';
 
 // Initialize connections
 const initConnections = async (): Promise<void> => {
@@ -48,6 +49,16 @@ initConnections().then(() => {
                         {
                             name: 'auth',
                             description: 'Authentication endpoints',
+                        },
+                        { name: 'common', description: 'Common endpoints' },
+                        { name: 'entry', description: 'Match entry endpoints' },
+                        { name: 'live', description: 'Live match endpoints' },
+                        { name: 'player', description: 'Player endpoints' },
+                        { name: 'stat', description: 'Statistics endpoints' },
+                        { name: 'summary', description: 'Summary endpoints' },
+                        {
+                            name: 'tournament',
+                            description: 'Tournament endpoints',
                         },
                     ],
                 },
@@ -141,20 +152,33 @@ initConnections().then(() => {
             docs: '/swagger',
         }))
         // Protected route example
-        .get('/user', ({ user, session }) => {
-            if (!user) {
-                return {
-                    authenticated: false,
-                    message: 'Not authenticated',
-                };
-            }
+        .get(
+            '/api/protected',
+            ({ user }) => {
+                if (!user) {
+                    return {
+                        status: 'error',
+                        message: 'Authentication required',
+                    };
+                }
 
-            return {
-                authenticated: true,
-                user,
-                session,
-            };
-        })
+                return {
+                    status: 'success',
+                    message: 'You are authenticated',
+                    user,
+                };
+            },
+            {
+                detail: {
+                    tags: ['auth'],
+                    summary: 'Protected route example',
+                    description:
+                        'Example of a route that requires authentication',
+                },
+            },
+        )
+        // Mount the v1 API routes
+        .use(v1Routes)
         .listen(process.env.API_PORT ?? 3000);
 
     logger.info(
