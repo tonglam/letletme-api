@@ -1,21 +1,24 @@
 import { swagger } from '@elysiajs/swagger';
 import 'dotenv/config';
 import { Elysia } from 'elysia';
+import { HttpStatusCode } from 'elysia-http-status-code';
+import { logger } from './config/logger';
 import { database } from './db';
+import { httpLoggerMiddleware } from './middlewares/httpLogger';
 import { redis } from './redis/client';
 
 // Initialize connections
-const initConnections = async () => {
+const initConnections = async (): Promise<void> => {
     // Initialize Redis connection
     redis.getClient();
-    console.log('Redis connection initialized');
+    logger.info('Redis connection initialized');
 
     // Check database connection
     const dbConnected = await database.checkConnection();
     if (dbConnected) {
-        console.log('Database connection initialized');
+        logger.info('Database connection initialized');
     } else {
-        console.error('Failed to connect to database');
+        logger.error('Failed to connect to database');
         process.exit(1);
     }
 };
@@ -40,6 +43,10 @@ initConnections().then(() => {
                 },
             }),
         )
+        // Add HTTP status code plugin
+        .use(HttpStatusCode())
+        // Add HTTP logger middleware
+        .use(httpLoggerMiddleware)
         .get('/', () => ({
             message: 'Welcome to LetLetMe API',
             version: '1.0.0',
@@ -47,25 +54,25 @@ initConnections().then(() => {
         }))
         .listen(process.env.API_PORT ?? 3000);
 
-    console.log(
+    logger.info(
         `🦊 LetLetMe API is running at ${app.server?.hostname}:${app.server?.port}`,
     );
 });
 
 // Handle application shutdown
-const gracefulShutdown = async () => {
-    console.log('Shutting down...');
+const gracefulShutdown = async (): Promise<void> => {
+    logger.info('Shutting down...');
 
     try {
         // Close Redis connection
         await redis.close();
-        console.log('Redis connection closed');
+        logger.info('Redis connection closed');
 
         // Close database connection
         await database.closeDbConnection();
-        console.log('Database connection closed');
+        logger.info('Database connection closed');
     } catch (error) {
-        console.error('Error during shutdown:', error);
+        logger.error('Error during shutdown', { error });
     }
 
     process.exit(0);

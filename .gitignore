@@ -48,3 +48,6 @@ package-lock.json
 # vscode
 .vscode/
 .editorconfig
+
+# logs
+logs/
