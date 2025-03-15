@@ -1,7 +1,7 @@
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import type { InferSelectModel } from 'drizzle-orm';
 import { and, asc, desc, eq, gt, sql } from 'drizzle-orm';
 import type { RowDataPacket } from 'mysql2/promise';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeDbConnection, db } from '../src/db/index';
 import { event } from '../src/db/schema/event.js';
 import * as schema from '../src/db/schema/index';

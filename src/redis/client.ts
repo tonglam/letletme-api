@@ -8,7 +8,7 @@ const client = new Redis({
     password: redisConfig.password,
     db: redisConfig.db,
     // Reconnect strategy
-    reconnectOnError: (err) => {
+    reconnectOnError: (err): boolean => {
         console.error('Redis connection error:', err);
         return true; // Auto-reconnect
     },

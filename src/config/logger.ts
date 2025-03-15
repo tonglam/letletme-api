@@ -3,7 +3,6 @@ import os from 'os';
 import path from 'path';
 import pino from 'pino';
 import pinoRoll from 'pino-roll';
-import { SonicBoom } from 'sonic-boom';
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type RotationInterval = 'daily' | 'weekly' | 'monthly';
@@ -39,23 +38,29 @@ if (!fs.existsSync(logPaths.logsDir)) {
 }
 
 // Configure rotation options
-const getRotationOptions = (filename: string) => ({
-    file: filename,
-    size: config.maxSize,
-    interval: config.rotationInterval,
-    compress: config.compress,
-    maxFiles: config.maxFiles,
-    mkdir: true,
-});
+function getRotationOptions(filename: string): {
+    file: string;
+    size: number;
+    interval: string;
+    compress: boolean;
+    maxFiles: number;
+    mkdir: boolean;
+} {
+    return {
+        file: filename,
+        size: config.maxSize,
+        interval: config.rotationInterval,
+        compress: config.compress,
+        maxFiles: config.maxFiles,
+        mkdir: true,
+    };
+}
 
 // Create streams using pino-roll
 // We use synchronous file streams initially and will replace them with pino-roll streams when ready
 const appStream = fs.createWriteStream(logPaths.appLog, { flags: 'a' });
 const errorStream = fs.createWriteStream(logPaths.errorLog, { flags: 'a' });
 const httpStream = fs.createWriteStream(logPaths.httpLog, { flags: 'a' });
-
-// Store SonicBoom instances for cleanup
-const sonicBoomInstances: SonicBoom[] = [];
 
 // Initialize pino-roll streams asynchronously
 Promise.all([
@@ -64,9 +69,6 @@ Promise.all([
     pinoRoll(getRotationOptions(logPaths.httpLog)),
 ])
     .then(([appRollStream, errorRollStream, httpRollStream]) => {
-        // Store instances for cleanup
-        sonicBoomInstances.push(appRollStream, errorRollStream, httpRollStream);
-
         Object.assign(appStream, {
             write: appRollStream.write.bind(appRollStream),
         });
@@ -138,13 +140,6 @@ process.on('exit', () => {
     if (appStream && typeof appStream.end === 'function') appStream.end();
     if (errorStream && typeof errorStream.end === 'function') errorStream.end();
     if (httpStream && typeof httpStream.end === 'function') httpStream.end();
-
-    // Close SonicBoom instances
-    sonicBoomInstances.forEach((stream) => {
-        if (stream && typeof stream.end === 'function') {
-            stream.end();
-        }
-    });
 });
 
 export default baseLogger;

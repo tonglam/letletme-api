@@ -15,12 +15,6 @@ import { config, createModuleLogger, logPaths } from '../src/config/logger.js';
 describe('Logger Configuration', () => {
     const originalEnv = { ...process.env };
     const testLogsDir = path.join(process.cwd(), 'test-logs');
-    const testLogPaths = {
-        logsDir: testLogsDir,
-        appLog: path.join(testLogsDir, 'app.log'),
-        errorLog: path.join(testLogsDir, 'error.log'),
-        httpLog: path.join(testLogsDir, 'http.log'),
-    };
 
     beforeAll(() => {
         // Store original environment and set test environment
@@ -120,6 +114,7 @@ describe('Logger Configuration', () => {
                 fs.unlinkSync(logPaths.errorLog);
                 fs.unlinkSync(logPaths.httpLog);
             } catch (err) {
+                console.error(err);
                 // Ignore errors if files don't exist
             }
         });
@@ -170,6 +165,7 @@ describe('Logger Configuration', () => {
                 stream.write('This should fail');
                 stream.end();
             } catch (err) {
+                console.error(err);
                 // Expected to throw
                 // Our error handler in the logger should have caught this
                 // and logged it to console.error
@@ -180,6 +176,7 @@ describe('Logger Configuration', () => {
                 fs.chmodSync(readOnlyFile, 0o666); // make writable again
                 fs.unlinkSync(readOnlyFile);
             } catch (err) {
+                console.error(err);
                 // Ignore errors
             }
 

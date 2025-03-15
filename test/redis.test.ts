@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { redis } from '../src/redis/client';
 
 // Test key prefix to avoid conflicts with actual application data
