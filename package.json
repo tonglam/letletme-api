@@ -1,15 +1,43 @@
 {
-  "name": "letletme-api",
-  "version": "1.0.50",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
-  },
-  "dependencies": {
-    "elysia": "latest"
-  },
-  "devDependencies": {
-    "bun-types": "latest"
-  },
-  "module": "src/index.js"
+    "name": "letletme-api",
+    "version": "1.0.50",
+    "type": "module",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "bun run --watch src/index.ts",
+        "lint": "eslint . --ext .ts",
+        "lint:fix": "eslint . --ext .ts --fix",
+        "format": "prettier --write \"**/*.{ts,json,md}\"",
+        "format:check": "prettier --check \"**/*.{ts,json,md}\"",
+        "db:generate": "drizzle-kit generate:mysql",
+        "db:push": "drizzle-kit push:mysql",
+        "db:studio": "drizzle-kit studio",
+        "db:setup": "bun run src/scripts/setup-db.ts"
+    },
+    "dependencies": {
+        "@elysiajs/bearer": "^1.2.0",
+        "@elysiajs/swagger": "^1.2.2",
+        "@node-rs/argon2": "^2.0.2",
+        "dotenv": "^16.4.7",
+        "drizzle-orm": "^0.40.0",
+        "drizzle-typebox": "^0.3.0",
+        "elysia": "latest",
+        "mysql2": "^3.13.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.22.0",
+        "@types/eslint": "^9.6.1",
+        "@types/prettier": "^3.0.0",
+        "@typescript-eslint/eslint-plugin": "^8.26.1",
+        "@typescript-eslint/parser": "^8.26.1",
+        "bun-types": "latest",
+        "drizzle-kit": "^0.30.5",
+        "eslint": "^9.22.0",
+        "eslint-config-prettier": "^10.1.1",
+        "eslint-plugin-prettier": "^5.2.3",
+        "prettier": "^3.5.3",
+        "tsx": "^4.19.3",
+        "typescript-eslint": "^8.26.1"
+    },
+    "module": "src/index.js"
 }
