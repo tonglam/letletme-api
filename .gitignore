@@ -44,3 +44,7 @@ package-lock.json
 .env
 .env.*
 !.env.example
+
+# vscode
+.vscode/
+.editorconfig
