@@ -3,7 +3,9 @@
     "version": "1.0.50",
     "type": "module",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:redis": "vitest run tests/redis.test.ts",
         "dev": "bun run --watch src/index.ts",
         "lint": "eslint . --ext .ts",
         "lint:fix": "eslint . --ext .ts --fix",
@@ -12,22 +14,33 @@
         "db:generate": "drizzle-kit generate:mysql",
         "db:push": "drizzle-kit push:mysql",
         "db:studio": "drizzle-kit studio",
-        "db:setup": "bun run src/scripts/setup-db.ts"
+        "db:setup": "bun run src/scripts/setup-db.ts",
+        "db:validate": "bun run src/scripts/validate-all-tables.ts",
+        "db:validate-table": "bun run src/scripts/validate-schema.ts",
+        "redis:setup-test": "bun run scripts/setup-redis-test-data.ts"
     },
     "dependencies": {
         "@elysiajs/bearer": "^1.2.0",
         "@elysiajs/swagger": "^1.2.2",
         "@node-rs/argon2": "^2.0.2",
+        "@types/glob": "^8.1.0",
+        "@types/lodash-es": "^4.17.12",
         "dotenv": "^16.4.7",
         "drizzle-orm": "^0.40.0",
         "drizzle-typebox": "^0.3.0",
         "elysia": "latest",
-        "mysql2": "^3.13.0"
+        "glob": "^11.0.1",
+        "ioredis": "^5.6.0",
+        "lodash-es": "^4.17.21",
+        "mysql2": "^3.13.0",
+        "uuid": "^11.1.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.22.0",
         "@types/eslint": "^9.6.1",
+        "@types/ioredis": "^5.0.0",
         "@types/prettier": "^3.0.0",
+        "@types/uuid": "^10.0.0",
         "@typescript-eslint/eslint-plugin": "^8.26.1",
         "@typescript-eslint/parser": "^8.26.1",
         "bun-types": "latest",
@@ -35,9 +48,11 @@
         "eslint": "^9.22.0",
         "eslint-config-prettier": "^10.1.1",
         "eslint-plugin-prettier": "^5.2.3",
+        "jiti": "^2.4.2",
         "prettier": "^3.5.3",
         "tsx": "^4.19.3",
-        "typescript-eslint": "^8.26.1"
+        "typescript-eslint": "^8.26.1",
+        "vitest": "^3.0.8"
     },
     "module": "src/index.js"
 }

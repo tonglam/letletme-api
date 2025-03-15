@@ -1,0 +1,27 @@
+import { mysqlTable, serial, int, varchar } from 'drizzle-orm/mysql-core';
+
+export const playerHistory = mysqlTable('player_history', {
+    id: serial('id').primaryKey().autoincrement().notNull(),
+    code: int('code').notNull(),
+    season: varchar('season', { length: 255 }).notNull(),
+    price: int('price'),
+    startPrice: int('start_price'),
+    totalPoints: int('total_points'),
+    minutes: int('minutes'),
+    goalsScored: int('goals_scored'),
+    assists: int('assists'),
+    cleanSheets: int('clean_sheets'),
+    goalsConceded: int('goals_conceded'),
+    ownGoals: int('own_goals'),
+    penaltiesSaved: int('penalties_saved'),
+    penaltiesMissed: int('penalties_missed'),
+    yellowCards: int('yellow_cards'),
+    redCards: int('red_cards'),
+    saves: int('saves'),
+    bonus: int('bonus'),
+    bps: int('bps'),
+    influence: varchar('influence', { length: 255 }),
+    creativity: varchar('creativity', { length: 255 }),
+    threat: varchar('threat', { length: 255 }),
+    ictIndex: varchar('ict_index', { length: 255 }),
+});

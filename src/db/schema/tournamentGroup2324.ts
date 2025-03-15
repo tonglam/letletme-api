@@ -1,0 +1,31 @@
+import {
+    mysqlTable,
+    serial,
+    int,
+    varchar,
+    timestamp,
+} from 'drizzle-orm/mysql-core';
+
+export const tournamentGroup2324 = mysqlTable('tournament_group_2324', {
+    id: serial('id').primaryKey().autoincrement().notNull(),
+    tournamentId: int('tournament_id').notNull(),
+    groupId: int('group_id').notNull(),
+    groupName: varchar('group_name', { length: 255 }),
+    groupIndex: int('group_index').notNull(),
+    entry: int('entry'),
+    startGw: int('start_gw'),
+    endGw: int('end_gw'),
+    groupPoints: int('group_points').default(0),
+    groupRank: int('group_rank'),
+    play: int('play').default(0),
+    win: int('win').default(0),
+    draw: int('draw').default(0),
+    lose: int('lose').default(0),
+    totalPoints: int('total_points'),
+    totalTransfersCost: int('total_transfers_cost'),
+    totalNetPoints: int('total_net_points'),
+    qualified: int('qualified').default(0),
+    overallRank: int('overall_rank'),
+    createTime: timestamp('create_time'),
+    updateTime: timestamp('update_time'),
+});

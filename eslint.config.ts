@@ -35,7 +35,7 @@ export default tseslint.config(
                     trailingComma: 'all',
                 },
             ],
-            'newline-per-chained-call': ['error', { ignoreChainWithDepth: 1 }],
+            'newline-per-chained-call': 'off',
         },
     } as const,
 );

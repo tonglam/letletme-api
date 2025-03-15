@@ -1,0 +1,30 @@
+import {
+    mysqlTable,
+    serial,
+    int,
+    varchar,
+    timestamp,
+} from 'drizzle-orm/mysql-core';
+
+export const entryEventResult2223 = mysqlTable('entry_event_result_2223', {
+    id: serial('id').primaryKey().autoincrement().notNull(),
+    event: int('event').notNull(),
+    entry: int('entry').notNull(),
+    eventPoints: int('event_points'),
+    eventTransfers: int('event_transfers'),
+    eventTransfersCost: int('event_transfers_cost'),
+    eventNetPoints: int('event_net_points'),
+    eventBenchPoints: int('event_bench_points'),
+    eventAutoSubPoints: int('event_auto_sub_points'),
+    eventRank: int('event_rank'),
+    eventChip: varchar('event_chip', { length: 255 }),
+    playedCaptain: int('played_captain'),
+    captainPoints: int('captain_points'),
+    eventPicks: varchar('event_picks', { length: 255 }),
+    eventAutoSubs: varchar('event_auto_subs', { length: 255 }),
+    overallPoints: int('overall_points'),
+    overallRank: int('overall_rank'),
+    teamValue: int('team_value'),
+    bank: int('bank'),
+    updateTime: timestamp('update_time'),
+});
