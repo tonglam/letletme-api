@@ -1,11 +1,11 @@
 import { Elysia, t } from 'elysia';
-import { EventService } from '../../services';
-import { EventDeadline, EventScores } from '../../types';
+import * as eventService from '../../services/event.service';
+import { EventDeadline, EventScores } from '../../types/event.type';
 
 export const eventRoutes = new Elysia({ prefix: '/events' })
     .get(
         '/current-with-deadline',
-        () => EventService.getCurrentEventAndDeadline(),
+        () => eventService.getCurrentEventAndDeadline(),
         {
             response: EventDeadline,
             detail: {
@@ -21,7 +21,7 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
             },
         },
     )
-    .post('/refresh', () => EventService.refreshEventAndDeadline(), {
+    .post('/refresh', () => eventService.refreshEventAndDeadline(), {
         response: t.Void(),
         detail: {
             tags: ['events'],
@@ -36,7 +36,7 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
     })
     .post(
         '/:event/cache',
-        ({ params }) => EventService.insertEventLiveCache(params.event),
+        ({ params }) => eventService.insertEventLiveCache(params.event),
         {
             params: t.Object({
                 event: t.Number(),
@@ -54,7 +54,7 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
             },
         },
     )
-    .get('/average-scores', () => EventService.getEventAverageScores(), {
+    .get('/average-scores', () => eventService.getEventAverageScores(), {
         response: EventScores,
         detail: {
             tags: ['events'],
@@ -66,4 +66,22 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
                 },
             },
         },
-    });
+    })
+    .post(
+        '/average-scores/refresh',
+        () => eventService.refreshEventAverageScores(),
+        {
+            response: t.Void(),
+            detail: {
+                tags: ['events'],
+                summary: 'Refresh event average scores cache',
+                description: 'Refreshes the cached event average scores',
+                responses: {
+                    200: {
+                        description:
+                            'Event average scores cache refreshed successfully',
+                    },
+                },
+            },
+        },
+    );

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { redis } from '../src/redis';
+import { redis } from '../../src/redis';
 
 // Test key prefix to avoid conflicts with actual application data
 const TEST_KEY_PREFIX = 'test:redis:';

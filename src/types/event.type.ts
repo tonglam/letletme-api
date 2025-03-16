@@ -16,22 +16,14 @@ export const EventDeadline = t.Object({
 export const EventScores = t.Record(t.String(), t.Number());
 
 /**
- * Event details schema
- * Detailed information about an event
+ * Internal event data type
  */
-export const EventDetailsData = t.Object({
-    id: t.Number(),
-    name: t.String(),
-    startDate: t.String(),
-    endDate: t.String(),
-    status: t.String(),
-    fixtures: t.Number(),
-    completed: t.Number(),
-    inProgress: t.Number(),
-    upcoming: t.Number(),
+export const EventData = t.Object({
+    event: t.String(),
+    deadline: t.String(),
 });
 
 // Export TypeScript types
 export type EventDeadline = typeof EventDeadline.static;
 export type EventScores = typeof EventScores.static;
-export type EventDetailsData = typeof EventDetailsData.static;
+export type EventData = typeof EventData.static;

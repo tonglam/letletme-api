@@ -74,6 +74,10 @@ alwaysApply: true
 
 ## Type Integrity
 - Avoid passing full context types; rely on Elysia’s inference capabilities.
+- Before create a type, always check `types/` first.
 
 ## Document
 - Check `https://elysiajs.com/essential/best-practice` if necessary or you are not sure.
+
+# Principle
+- Priority functions not classes. Only create a class when there is no other way.
