@@ -1,9 +1,9 @@
 import { Elysia, t } from 'elysia';
-import { CommonService } from '../../../services/common';
+import { NoticeService } from '../../services';
 
 export const noticeRoutes = new Elysia({ prefix: '/notices' }).get(
     '/mini-program',
-    () => CommonService.qryMiniProgramNotice(),
+    () => NoticeService.getMiniProgramNotice(),
     {
         response: t.String(),
         detail: {

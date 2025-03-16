@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { HttpStatusCode } from 'elysia-http-status-code';
 
-export const statRoutes = new Elysia({ prefix: '/statistics' })
+export const statisticRoutes = new Elysia({ prefix: '/statistics' })
     .use(HttpStatusCode())
     // Get tournament statistics
     .get(

@@ -1,10 +1,10 @@
 import { Elysia, t } from 'elysia';
-import { CommonService } from '../../../services/common';
-import { TeamData } from '../../../types/common.type';
+import { TeamService } from '../../services';
+import { TeamData } from '../../types';
 
 export const teamRoutes = new Elysia({ prefix: '/teams' }).get(
     '/',
-    ({ query }) => CommonService.qryTeamList(query.season),
+    ({ query }) => TeamService.getTeamList(query.season),
     {
         query: t.Object({
             season: t.String(),

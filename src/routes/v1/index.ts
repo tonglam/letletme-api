@@ -1,28 +1,28 @@
 import { Elysia } from 'elysia';
-import { entryRoutes as matchRoutes } from './entries/index';
-import { eventRoutes } from './events/index';
-import { fixtureRoutes } from './fixtures/index';
-import { leagueRoutes } from './leagues/index';
-import { liveRoutes } from './live/index';
-import { noticeRoutes } from './notices/index';
-import { playerRoutes } from './players/index';
-import { statRoutes as statisticsRoutes } from './statistics/index';
-import { summaryRoutes as summariesRoutes } from './summaries/index';
-import { systemRoutes } from './system/index';
-import { teamRoutes } from './teams/index';
-import { tournamentRoutes } from './tournaments/index';
+import { entryRoutes } from './entry.route';
+import { eventRoutes } from './event.route';
+import { fixtureRoutes } from './fixture.route';
+import { leagueRoutes } from './league.route';
+import { liveRoutes } from './live.route';
+import { noticeRoutes } from './notice.route';
+import { playerRoutes } from './player.route';
+import { statisticRoutes } from './statistic.route';
+import { summaryRoutes } from './summary.route';
+import { systemRoutes } from './system.route';
+import { teamRoutes } from './team.route';
+import { tournamentRoutes } from './tournament.route';
 
 // Create a versioned API router that combines all route groups
 export const v1Routes = new Elysia({ prefix: '/v1' })
     .use(systemRoutes)
-    .use(matchRoutes)
+    .use(entryRoutes)
     .use(eventRoutes)
     .use(fixtureRoutes)
     .use(leagueRoutes)
     .use(liveRoutes)
     .use(noticeRoutes)
     .use(playerRoutes)
-    .use(statisticsRoutes)
-    .use(summariesRoutes)
+    .use(statisticRoutes)
+    .use(summaryRoutes)
     .use(teamRoutes)
     .use(tournamentRoutes);

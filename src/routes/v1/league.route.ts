@@ -1,10 +1,10 @@
 import { Elysia, t } from 'elysia';
-import { CommonService } from '../../../services/common';
-import { LeagueInfoData } from '../../../types/common.type';
+import { LeagueService } from '../../services';
+import { LeagueInfoData } from '../../types';
 
 export const leagueRoutes = new Elysia({ prefix: '/leagues' }).get(
     '/',
-    ({ query }) => CommonService.qryAllLeagueName(query.season),
+    ({ query }) => LeagueService.getAllLeagueNames(query.season),
     {
         query: t.Object({
             season: t.String(),

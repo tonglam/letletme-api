@@ -1,11 +1,11 @@
 import { Elysia, t } from 'elysia';
-import { CommonService } from '../../../services/common';
-import { EventDeadline, EventScores } from '../../../types/common.type';
+import { EventService } from '../../services';
+import { EventDeadline, EventScores } from '../../types';
 
 export const eventRoutes = new Elysia({ prefix: '/events' })
     .get(
         '/current-with-deadline',
-        () => CommonService.qryCurrentEventAndNextUtcDeadline(),
+        () => EventService.getCurrentEventAndDeadline(),
         {
             response: EventDeadline,
             detail: {
@@ -21,7 +21,7 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
             },
         },
     )
-    .post('/refresh', () => CommonService.refreshEventAndDeadline(), {
+    .post('/refresh', () => EventService.refreshEventAndDeadline(), {
         response: t.Void(),
         detail: {
             tags: ['events'],
@@ -36,7 +36,7 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
     })
     .post(
         '/:event/cache',
-        ({ params }) => CommonService.insertEventLiveCache(params.event),
+        ({ params }) => EventService.insertEventLiveCache(params.event),
         {
             params: t.Object({
                 event: t.Number(),
@@ -54,7 +54,7 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
             },
         },
     )
-    .get('/average-scores', () => CommonService.qryEventAverageScore(), {
+    .get('/average-scores', () => EventService.getEventAverageScores(), {
         response: EventScores,
         detail: {
             tags: ['events'],

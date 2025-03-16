@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { HttpStatusCode } from 'elysia-http-status-code';
 
-export const entryRoutes = new Elysia({ prefix: '/matches' })
+export const entryRoutes = new Elysia({ prefix: '/entries' })
     .use(HttpStatusCode())
     // Get all matches
     .get(

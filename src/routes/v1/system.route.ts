@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
-import { database } from '../../../db';
-import { redis } from '../../../redis';
+import { database } from '../../db';
+import { redis } from '../../redis';
 
 export const systemRoutes = new Elysia()
     .get(
