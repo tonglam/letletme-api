@@ -2,7 +2,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import pino from 'pino';
-import pinoRoll from 'pino-roll';
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type RotationInterval = 'daily' | 'weekly' | 'monthly';
@@ -15,11 +14,19 @@ export interface LogConfig {
     compress: boolean;
 }
 
+// Get the current date in YYYY-MM-DD format
+function getDateString(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+// Define log paths with date in the filename
+const dateStr = getDateString();
 export const logPaths = {
     logsDir: path.join(process.cwd(), 'logs'),
-    appLog: path.join(process.cwd(), 'logs', 'app.log'),
-    errorLog: path.join(process.cwd(), 'logs', 'error.log'),
-    httpLog: path.join(process.cwd(), 'logs', 'http.log'),
+    appLog: path.join(process.cwd(), 'logs', `app.${dateStr}.log`),
+    errorLog: path.join(process.cwd(), 'logs', `error.${dateStr}.log`),
+    httpLog: path.join(process.cwd(), 'logs', `http.${dateStr}.log`),
 };
 
 // Configuration object
@@ -37,53 +44,10 @@ if (!fs.existsSync(logPaths.logsDir)) {
     fs.mkdirSync(logPaths.logsDir, { recursive: true, mode: 0o755 });
 }
 
-// Configure rotation options
-function getRotationOptions(filename: string): {
-    file: string;
-    size: number;
-    frequency: string;
-    dateFormat: string;
-    compress: boolean;
-    maxFiles: number;
-    mkdir: boolean;
-} {
-    return {
-        file: filename,
-        size: config.maxSize,
-        frequency: config.rotationInterval,
-        dateFormat: 'YYYY-MM-DD',
-        compress: config.compress,
-        maxFiles: config.maxFiles,
-        mkdir: true,
-    };
-}
-
-// Create streams using pino-roll
-// We use synchronous file streams initially and will replace them with pino-roll streams when ready
+// Create streams directly without rotation (we'll handle rotation by date in the filename)
 const appStream = fs.createWriteStream(logPaths.appLog, { flags: 'a' });
 const errorStream = fs.createWriteStream(logPaths.errorLog, { flags: 'a' });
 const httpStream = fs.createWriteStream(logPaths.httpLog, { flags: 'a' });
-
-// Initialize pino-roll streams asynchronously
-Promise.all([
-    pinoRoll(getRotationOptions(logPaths.appLog)),
-    pinoRoll(getRotationOptions(logPaths.errorLog)),
-    pinoRoll(getRotationOptions(logPaths.httpLog)),
-])
-    .then(([appRollStream, errorRollStream, httpRollStream]) => {
-        Object.assign(appStream, {
-            write: appRollStream.write.bind(appRollStream),
-        });
-        Object.assign(errorStream, {
-            write: errorRollStream.write.bind(errorRollStream),
-        });
-        Object.assign(httpStream, {
-            write: httpRollStream.write.bind(httpRollStream),
-        });
-    })
-    .catch((err) => {
-        console.error('Failed to initialize pino-roll streams:', err);
-    });
 
 // Create base logger
 const baseLogger = pino(
