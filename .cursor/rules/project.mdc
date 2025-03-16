@@ -53,6 +53,11 @@ alwaysApply: true
 
 ## Swagger
 - Integrate Elysia Swagger for automatic API documentation.
+- All endpoints must include the `detail` property with:
+  - `tags`: Array of relevant tags for categorization
+  - `summary`: Short description of the endpoint
+  - `description`: Detailed explanation of the endpoint's purpose
+  - `responses`: Expected response codes and descriptions
 
 # Development Workflow
 

@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { logger } from '../config/logger';
 import { redisConfig } from '../config/redis';
 
 // Create Redis client instance
@@ -9,18 +10,18 @@ const client = new Redis({
     db: redisConfig.db,
     // Reconnect strategy
     reconnectOnError: (err): boolean => {
-        console.error('Redis connection error:', err);
+        logger.error({ err }, 'Redis connection error');
         return true; // Auto-reconnect
     },
 });
 
 // Setup event listeners
 client.on('error', (err) => {
-    console.error('Redis error:', err);
+    logger.error({ err }, 'Redis error');
 });
 
 client.on('connect', () => {
-    console.log('Connected to Redis server');
+    logger.info('Connected to Redis server');
 });
 
 /**
@@ -102,7 +103,7 @@ export async function getJson<T>(key: string): Promise<T | null> {
     try {
         return JSON.parse(value) as T;
     } catch (err) {
-        console.error(`Error parsing JSON from Redis key ${key}:`, err);
+        logger.error({ err, key }, 'Error parsing JSON from Redis key');
         return null;
     }
 }

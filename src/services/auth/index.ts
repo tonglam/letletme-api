@@ -1,6 +1,6 @@
 import { hash, verify } from '@node-rs/argon2';
 import { randomBytes } from 'crypto';
-import { redis } from '../redis/client';
+import { redis } from '../../redis';
 
 // Constants
 const SESSION_EXPIRY = 60 * 60 * 24 * 7; // 7 days in seconds

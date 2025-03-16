@@ -11,7 +11,7 @@ import {
     userMiddleware,
 } from './middlewares/betterAuth';
 import { httpLoggerMiddleware } from './middlewares/httpLogger';
-import { redis } from './redis/client';
+import { redis } from './redis';
 import { v1Routes } from './routes/v1';
 
 // Initialize connections
@@ -43,9 +43,6 @@ initConnections().then(() => {
                         description: 'API for LetLetMe application',
                     },
                     tags: [
-                        { name: 'users', description: 'User endpoints' },
-                        { name: 'posts', description: 'Post endpoints' },
-                        { name: 'comments', description: 'Comment endpoints' },
                         {
                             name: 'auth',
                             description: 'Authentication endpoints',

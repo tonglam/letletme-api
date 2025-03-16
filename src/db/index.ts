@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import { dbConfig } from '../config/db';
+import { logger } from '../config/logger';
 import * as schema from './schema/index';
 
 // Create database connection pool - this is a singleton due to module caching
@@ -24,7 +25,7 @@ export async function checkConnection(): Promise<boolean> {
         await poolConnection.query('SELECT 1');
         return true;
     } catch (error) {
-        console.error('Database health check failed:', error);
+        logger.error({ err: error }, 'Database health check failed');
         return false;
     }
 }

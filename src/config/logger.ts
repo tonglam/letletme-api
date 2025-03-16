@@ -41,7 +41,8 @@ if (!fs.existsSync(logPaths.logsDir)) {
 function getRotationOptions(filename: string): {
     file: string;
     size: number;
-    interval: string;
+    frequency: string;
+    dateFormat: string;
     compress: boolean;
     maxFiles: number;
     mkdir: boolean;
@@ -49,7 +50,8 @@ function getRotationOptions(filename: string): {
     return {
         file: filename,
         size: config.maxSize,
-        interval: config.rotationInterval,
+        frequency: config.rotationInterval,
+        dateFormat: 'YYYY-MM-DD',
         compress: config.compress,
         maxFiles: config.maxFiles,
         mkdir: true,

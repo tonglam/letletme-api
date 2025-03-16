@@ -1,4 +1,4 @@
-import { redis } from './redis/client';
+import { redis } from './redis';
 
 // Define types for Better Auth
 interface User {
