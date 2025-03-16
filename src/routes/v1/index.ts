@@ -8,7 +8,7 @@ import { summaryRoutes } from './summary/index';
 import { tournamentRoutes } from './tournament/index';
 
 // Create a versioned API router that combines all route groups
-export const v1Routes = new Elysia({ prefix: '/api/v1' })
+export const v1Routes = new Elysia({ prefix: '/v1' })
     .use(commonRoutes)
     .use(entryRoutes)
     .use(liveRoutes)
