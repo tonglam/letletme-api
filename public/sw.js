@@ -3,7 +3,7 @@
 const CACHE_NAME = 'letletme-api-cache-v1';
 const ASSETS_TO_CACHE = [
     '/favicon.svg',
-    'https://public.letletme.top/miniprogram.webp',
+    'https://static.letletme.top/miniprogram.webp',
 ];
 
 // Install event - cache assets
