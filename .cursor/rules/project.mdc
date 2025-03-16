@@ -1,0 +1,74 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Structure
+
+## Routes
+- Organize RESTful API routes in `src/routes/v1/<resource>.ts`.
+- Create a new folder for each resource as needed.
+
+## Services
+- Place service logic in `src/services/<resourceService>.ts`.
+- Match or create resource folders accordingly.
+
+## Models
+- Define models using `Elysia.t` in `src/models.ts` or resource-specific files.
+
+# Controllers
+
+## One Elysia Instance per Controller
+- Each controller must be a standalone Elysia instance.
+
+## Method Chaining
+- Always use method chaining for defining routes and configurations.
+
+## Route Definition
+- Define routes relative to the resource root (e.g., `'/'`, `'/:id'`).
+
+# Services
+
+## Non-Request Dependent
+- Use static classes or modules with exported functions.
+
+## Request Dependent
+- Implement as Elysia plugins for type safety.
+
+## Location
+- Store in `src/services/<resourceService>.ts`.
+
+# Models (DTOs)
+
+## Definition
+- Use `Elysia.t` for validation and type inference.
+
+## Injection
+- Reference models in controllers via Elysia’s model system for runtime validation and OpenAPI support.
+
+# Main Application Setup
+
+## Grouping
+- Use `.group()` to mount controllers under `/v1/<resource>`.
+
+## Swagger
+- Integrate Elysia Swagger for automatic API documentation.
+
+# Development Workflow
+
+## Linting
+- Run the linter after implementing new code and resolve all errors and warnings.
+
+# Elysia Best Practices
+
+## Method Chaining
+- Always chain methods on Elysia instances for type safety.
+
+## Plugin Reuse
+- Reuse plugins where applicable; Elysia handles deduplication automatically.
+
+## Type Integrity
+- Avoid passing full context types; rely on Elysia’s inference capabilities.
+
+## Document
+- Check `https://elysiajs.com/essential/best-practice` if necessary or you are not sure.
