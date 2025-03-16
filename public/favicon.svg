@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#37003c" />
+  
+  <!-- API Gateway Structure -->
+  <rect x="22" y="14" width="20" height="36" rx="4" fill="#00ff87" opacity="0.3" />
+  
+  <!-- Gateway/Portal Representation -->
+  <rect x="22" y="14" width="20" height="36" rx="4" stroke="#00ff87" stroke-width="2" fill="none" />
+  
+  <!-- Data Flow through Gateway -->
+  <path d="M10 24 L22 24" stroke="#00ff87" stroke-width="3" stroke-linecap="round" />
+  <path d="M10 32 L22 32" stroke="#00ff87" stroke-width="3" stroke-linecap="round" />
+  <path d="M10 40 L22 40" stroke="#00ff87" stroke-width="3" stroke-linecap="round" />
+  
+  <path d="M42 24 L54 24" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+  <path d="M42 32 L54 32" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+  <path d="M42 40 L54 40" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+  
+  <!-- Soccer Ball Inside Gateway -->
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+  <path d="M32 26 L30 29 L27 29 L29 32 L28 35 L32 34 L36 35 L35 32 L37 29 L34 29 Z" fill="#000000" />
+  
+  <!-- API Text -->
+  <text x="32" y="54" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#ffffff">API</text>
+  
+  <!-- Double L for "Letletme" -->
+  <path d="M25 17 L25 22 L28 22" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M32 17 L32 22 L35 22" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>
