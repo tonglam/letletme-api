@@ -122,7 +122,7 @@ export const liveRoutes = new Elysia({ prefix: '/live' })
             }),
         },
     )
-    // Update live match score (for authorized users)
+    // Update live match score
     .patch(
         '/matches/:id/score',
         async ({ params, body, set }) => {
@@ -154,9 +154,6 @@ export const liveRoutes = new Elysia({ prefix: '/live' })
                     },
                     400: {
                         description: 'Invalid input',
-                    },
-                    401: {
-                        description: 'Unauthorized',
                     },
                 },
             },
@@ -198,9 +195,6 @@ export const liveRoutes = new Elysia({ prefix: '/live' })
                     },
                     400: {
                         description: 'Invalid input',
-                    },
-                    401: {
-                        description: 'Unauthorized',
                     },
                 },
             },

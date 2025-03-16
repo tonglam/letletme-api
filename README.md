@@ -11,37 +11,13 @@ A simple REST API built with Elysia.js and Drizzle ORM.
 - **Logging**: [Pino](https://getpino.io/) for structured logging with file rotation
 - **Caching**: [Redis](https://redis.io/) for high-performance caching
 - **Documentation**: Swagger via @elysiajs/swagger plugin
-- **Authentication**: [Better Auth](https://www.better-auth.com/) for secure, cookie-based authentication with CSRF protection
 
 ## Features
 
 - User management (CRUD operations)
 - MySQL database integration with Drizzle ORM
 - Swagger documentation
-- Better Auth integration for secure authentication
-- Anonymous authentication support
 - Structured logging with Pino
-
-## Authentication
-
-The API uses Better Auth for authentication, providing both traditional and anonymous authentication methods:
-
-### Traditional Authentication
-
-Users can sign in using credentials (username/password) through the `/api/auth/signin` endpoint.
-
-### Anonymous Authentication
-
-The API supports anonymous authentication, allowing users to interact with the application without creating an account:
-
-1. **Anonymous Sign-in**: Users can sign in anonymously via the `/api/auth/anonymous` endpoint.
-2. **Account Linking**: Anonymous accounts can be converted to regular accounts using the `/api/auth/link-anonymous` endpoint.
-
-This is useful for:
-
-- Allowing users to try the application before creating an account
-- Preserving user data when they decide to create a full account
-- Reducing friction in the onboarding process
 
 ## Getting Started
 
