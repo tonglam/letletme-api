@@ -10,6 +10,13 @@ export PATH=$PATH:$HOME/.bun/bin
 cd /home/workspace/letletme-api
 echo "Changed to application directory: $(pwd)"
 
+# Create logs directory if it doesn't exist
+if [ ! -d "logs" ]; then
+    echo "Creating logs directory..."
+    mkdir -p logs
+    chmod 755 logs
+fi
+
 # Install dependencies
 echo "Installing dependencies..."
 bun install

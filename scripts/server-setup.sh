@@ -36,8 +36,7 @@ pm2 set pm2-logrotate:compress false
 
 # Create application directory structure
 echo "Creating application directory structure..."
-mkdir -p /home/workspace/letletme-api/logs
-chmod 755 /home/workspace/letletme-api/logs
+mkdir -p /home/workspace/letletme-api
 
 # Generate PM2 startup command
 echo "PM2 startup command (run with sudo):"
