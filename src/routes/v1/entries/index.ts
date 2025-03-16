@@ -1,9 +1,9 @@
 import { Elysia, t } from 'elysia';
 import { HttpStatusCode } from 'elysia-http-status-code';
 
-export const entryRoutes = new Elysia({ prefix: '/entry' })
+export const entryRoutes = new Elysia({ prefix: '/matches' })
     .use(HttpStatusCode())
-    // Get all match entries
+    // Get all matches
     .get(
         '/',
         async ({ query }) => {
@@ -39,12 +39,12 @@ export const entryRoutes = new Elysia({ prefix: '/entry' })
         },
         {
             detail: {
-                tags: ['entry'],
-                summary: 'Get all match entries',
-                description: 'Returns a paginated list of all match entries',
+                tags: ['entries'],
+                summary: 'Get all entries',
+                description: 'Returns a paginated list of all entries',
                 responses: {
                     200: {
-                        description: 'List of match entries',
+                        description: 'List of entries',
                     },
                 },
             },
@@ -84,15 +84,15 @@ export const entryRoutes = new Elysia({ prefix: '/entry' })
         },
         {
             detail: {
-                tags: ['entry'],
-                summary: 'Get match entry by ID',
-                description: 'Returns details of a specific match entry',
+                tags: ['entries'],
+                summary: 'Get entry by ID',
+                description: 'Returns details of a specific entry',
                 responses: {
                     200: {
-                        description: 'Match entry details',
+                        description: 'Entry details',
                     },
                     404: {
-                        description: 'Match entry not found',
+                        description: 'Entry not found',
                     },
                 },
             },
@@ -101,7 +101,7 @@ export const entryRoutes = new Elysia({ prefix: '/entry' })
             }),
         },
     )
-    // Create new match entry
+    // Create new match
     .post(
         '/',
         async ({ body, set }) => {
@@ -109,7 +109,7 @@ export const entryRoutes = new Elysia({ prefix: '/entry' })
             set.status = 201;
             return {
                 status: 'success',
-                message: 'Match entry created successfully',
+                message: 'Match created successfully',
                 data: {
                     id: Math.floor(Math.random() * 1000).toString(),
                     ...body,
@@ -119,12 +119,12 @@ export const entryRoutes = new Elysia({ prefix: '/entry' })
         },
         {
             detail: {
-                tags: ['entry'],
-                summary: 'Create match entry',
-                description: 'Creates a new match entry',
+                tags: ['entries'],
+                summary: 'Create entry',
+                description: 'Creates a new entry',
                 responses: {
                     201: {
-                        description: 'Match entry created successfully',
+                        description: 'Entry created successfully',
                     },
                     400: {
                         description: 'Invalid input',
@@ -142,14 +142,14 @@ export const entryRoutes = new Elysia({ prefix: '/entry' })
             }),
         },
     )
-    // Update match entry
+    // Update match
     .put(
         '/:id',
         async ({ params, body }) => {
             // Mock response - to be implemented with actual database queries
             return {
                 status: 'success',
-                message: 'Match entry updated successfully',
+                message: 'Match updated successfully',
                 data: {
                     id: params.id,
                     ...body,
@@ -158,15 +158,15 @@ export const entryRoutes = new Elysia({ prefix: '/entry' })
         },
         {
             detail: {
-                tags: ['entry'],
-                summary: 'Update match entry',
-                description: 'Updates an existing match entry',
+                tags: ['entries'],
+                summary: 'Update entry',
+                description: 'Updates an existing entry',
                 responses: {
                     200: {
-                        description: 'Match entry updated successfully',
+                        description: 'Entry updated successfully',
                     },
                     404: {
-                        description: 'Match entry not found',
+                        description: 'Entry not found',
                     },
                     400: {
                         description: 'Invalid input',
@@ -210,15 +210,15 @@ export const entryRoutes = new Elysia({ prefix: '/entry' })
         },
         {
             detail: {
-                tags: ['entry'],
-                summary: 'Update match score',
-                description: 'Updates the score for an existing match',
+                tags: ['entries'],
+                summary: 'Update entry score',
+                description: 'Updates the score for an existing entry',
                 responses: {
                     200: {
-                        description: 'Match score updated successfully',
+                        description: 'Entry score updated successfully',
                     },
                     404: {
-                        description: 'Match entry not found',
+                        description: 'Entry not found',
                     },
                     400: {
                         description: 'Invalid input',
@@ -235,26 +235,26 @@ export const entryRoutes = new Elysia({ prefix: '/entry' })
             }),
         },
     )
-    // Delete match entry
+    // Delete match
     .delete(
         '/:id',
         async ({ params, set }) => {
             // Mock implementation - actually delete the match with ID params.id
-            console.log(`Deleting match entry with ID: ${params.id}`);
+            console.log(`Deleting entry with ID: ${params.id}`);
             set.status = 204;
             return null;
         },
         {
             detail: {
-                tags: ['entry'],
-                summary: 'Delete match entry',
-                description: 'Deletes an existing match entry',
+                tags: ['entries'],
+                summary: 'Delete entry',
+                description: 'Deletes an existing entry',
                 responses: {
                     204: {
-                        description: 'Match entry deleted successfully',
+                        description: 'Entry deleted successfully',
                     },
                     404: {
-                        description: 'Match entry not found',
+                        description: 'Entry not found',
                     },
                 },
             },

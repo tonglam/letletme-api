@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { HttpStatusCode } from 'elysia-http-status-code';
 
-export const tournamentRoutes = new Elysia({ prefix: '/tournament' })
+export const tournamentRoutes = new Elysia({ prefix: '/tournaments' })
     .use(HttpStatusCode())
     // Get all tournaments
     .get(
@@ -30,7 +30,7 @@ export const tournamentRoutes = new Elysia({ prefix: '/tournament' })
         },
         {
             detail: {
-                tags: ['tournament'],
+                tags: ['tournaments'],
                 summary: 'Get all tournaments',
                 description: 'Returns a list of all tournaments',
                 responses: {
@@ -62,7 +62,7 @@ export const tournamentRoutes = new Elysia({ prefix: '/tournament' })
         },
         {
             detail: {
-                tags: ['tournament'],
+                tags: ['tournaments'],
                 summary: 'Get tournament by ID',
                 description: 'Returns details of a specific tournament',
                 responses: {
@@ -96,7 +96,7 @@ export const tournamentRoutes = new Elysia({ prefix: '/tournament' })
         },
         {
             detail: {
-                tags: ['tournament'],
+                tags: ['tournaments'],
                 summary: 'Create tournament',
                 description: 'Creates a new tournament',
                 responses: {
@@ -134,7 +134,7 @@ export const tournamentRoutes = new Elysia({ prefix: '/tournament' })
         },
         {
             detail: {
-                tags: ['tournament'],
+                tags: ['tournaments'],
                 summary: 'Update tournament',
                 description: 'Updates an existing tournament',
                 responses: {
@@ -173,7 +173,7 @@ export const tournamentRoutes = new Elysia({ prefix: '/tournament' })
         },
         {
             detail: {
-                tags: ['tournament'],
+                tags: ['tournaments'],
                 summary: 'Delete tournament',
                 description: 'Deletes an existing tournament',
                 responses: {

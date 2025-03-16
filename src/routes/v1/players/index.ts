@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { HttpStatusCode } from 'elysia-http-status-code';
 
-export const playerRoutes = new Elysia({ prefix: '/player' })
+export const playerRoutes = new Elysia({ prefix: '/players' })
     .use(HttpStatusCode())
     // Get all players
     .get(
@@ -30,7 +30,7 @@ export const playerRoutes = new Elysia({ prefix: '/player' })
         },
         {
             detail: {
-                tags: ['player'],
+                tags: ['players'],
                 summary: 'Get all players',
                 description: 'Returns a paginated list of all players',
                 responses: {
@@ -70,7 +70,7 @@ export const playerRoutes = new Elysia({ prefix: '/player' })
         },
         {
             detail: {
-                tags: ['player'],
+                tags: ['players'],
                 summary: 'Get player by ID',
                 description: 'Returns details of a specific player',
                 responses: {
@@ -109,7 +109,7 @@ export const playerRoutes = new Elysia({ prefix: '/player' })
         },
         {
             detail: {
-                tags: ['player'],
+                tags: ['players'],
                 summary: 'Get player statistics',
                 description:
                     'Returns detailed statistics for a specific player',
@@ -145,7 +145,7 @@ export const playerRoutes = new Elysia({ prefix: '/player' })
         },
         {
             detail: {
-                tags: ['player'],
+                tags: ['players'],
                 summary: 'Create player',
                 description: 'Creates a new player',
                 responses: {
@@ -181,7 +181,7 @@ export const playerRoutes = new Elysia({ prefix: '/player' })
         },
         {
             detail: {
-                tags: ['player'],
+                tags: ['players'],
                 summary: 'Update player',
                 description: 'Updates an existing player',
                 responses: {
@@ -218,7 +218,7 @@ export const playerRoutes = new Elysia({ prefix: '/player' })
         },
         {
             detail: {
-                tags: ['player'],
+                tags: ['players'],
                 summary: 'Delete player',
                 description: 'Deletes an existing player',
                 responses: {

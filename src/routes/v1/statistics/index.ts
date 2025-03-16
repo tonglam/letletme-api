@@ -1,11 +1,11 @@
 import { Elysia, t } from 'elysia';
 import { HttpStatusCode } from 'elysia-http-status-code';
 
-export const statRoutes = new Elysia({ prefix: '/stat' })
+export const statRoutes = new Elysia({ prefix: '/statistics' })
     .use(HttpStatusCode())
     // Get tournament statistics
     .get(
-        '/tournament/:id',
+        '/tournaments/:id',
         async ({ params }) => {
             // Mock response - to be implemented with actual database queries
             return {
@@ -39,7 +39,7 @@ export const statRoutes = new Elysia({ prefix: '/stat' })
         },
         {
             detail: {
-                tags: ['stat'],
+                tags: ['statistics'],
                 summary: 'Get tournament statistics',
                 description:
                     'Returns statistical data for a specific tournament',
@@ -59,7 +59,7 @@ export const statRoutes = new Elysia({ prefix: '/stat' })
     )
     // Get player statistics
     .get(
-        '/player/:id',
+        '/players/:id',
         async ({ params, query }) => {
             // Mock response - to be implemented with actual database queries
             const tournamentId = query.tournamentId as string | undefined;
@@ -103,7 +103,7 @@ export const statRoutes = new Elysia({ prefix: '/stat' })
         },
         {
             detail: {
-                tags: ['stat'],
+                tags: ['statistics'],
                 summary: 'Get player statistics',
                 description: 'Returns statistical data for a specific player',
                 responses: {
