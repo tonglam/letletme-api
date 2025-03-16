@@ -57,8 +57,8 @@ if [ "$PM2_PROCESS_EXISTS" = true ]; then
     pm2 reload letletme-api
 else
     # Application doesn't exist, start it
-    echo "Starting new PM2 process..."
-    pm2 start dist/index.js $PM2_ARGS
+    echo "Starting new PM2 process with Bun..."
+    pm2 start --interpreter $(which bun) dist/index.js $PM2_ARGS
 fi
 
 # Save PM2 process list
