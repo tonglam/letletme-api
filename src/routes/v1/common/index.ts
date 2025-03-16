@@ -209,7 +209,6 @@ export const commonRoutes = new Elysia({ prefix: '/common' })
             return {
                 name: 'LetLetMe API',
                 version: '1.0.0',
-                environment: process.env.NODE_ENV || 'development',
             };
         },
         {
