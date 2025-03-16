@@ -39,6 +39,15 @@ if ! command -v pm2 &> /dev/null; then
     npm install -g pm2
 fi
 
+# Install PM2 log rotation if not already installed
+if ! pm2 list | grep -q "pm2-logrotate"; then
+    echo "Installing PM2 log rotation..."
+    pm2 install pm2-logrotate
+    pm2 set pm2-logrotate:max_size 10M
+    pm2 set pm2-logrotate:retain 7
+    pm2 set pm2-logrotate:compress false
+fi
+
 # Configure PM2 to use our log directory
 PM2_ARGS="--name letletme-api --log ./logs/app.log --error ./logs/error.log --time"
 
@@ -52,14 +61,19 @@ if pm2 list | grep -q "letletme-api"; then
 fi
 
 if [ "$PM2_PROCESS_EXISTS" = true ]; then
-    # Application exists, reload it
-    echo "Reloading existing PM2 process..."
-    pm2 reload letletme-api
-else
-    # Application doesn't exist, start it
-    echo "Starting new PM2 process with Bun..."
-    pm2 start --interpreter $(which bun) dist/index.js $PM2_ARGS
+    # Stop the existing process
+    echo "Stopping existing PM2 process..."
+    pm2 stop letletme-api
+    pm2 delete letletme-api
 fi
+
+# Start a new process using the recommended Bun approach
+echo "Starting new PM2 process with Bun..."
+pm2 start bun --name letletme-api -- run dist/index.js $PM2_ARGS
+
+# Set up PM2 to start on system boot
+echo "Setting up PM2 startup..."
+pm2 startup
 
 # Save PM2 process list
 echo "Saving PM2 process list..."
