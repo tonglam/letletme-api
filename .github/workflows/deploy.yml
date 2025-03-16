@@ -43,7 +43,9 @@ jobs:
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       mkdir -p /home/workspace/letletme-api/logs
+                      mkdir -p /home/workspace/letletme-api/public
                       chmod 755 /home/workspace/letletme-api/logs
+                      chmod 755 /home/workspace/letletme-api/public
 
             - name: Copy files to the Server
               uses: appleboy/scp-action@master
@@ -51,7 +53,7 @@ jobs:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
-                  source: './src/,./package.json,./bun.lock,./.env,./drizzle/,./tsconfig.json,./drizzle.config.ts,./bunfig.toml,./.prettierrc.json,./.prettierignore,./eslint.config.ts,./scripts/deploy.sh'
+                  source: './src/,./public/,./package.json,./bun.lock,./.env,./drizzle/,./tsconfig.json,./drizzle.config.ts,./bunfig.toml,./.prettierrc.json,./.prettierignore,./eslint.config.ts,./scripts/deploy.sh'
                   target: '/home/workspace/letletme-api'
                   strip_components: 0
                   rm: false
