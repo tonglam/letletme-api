@@ -1,3 +1,4 @@
+import { staticPlugin } from '@elysiajs/static';
 import { swagger } from '@elysiajs/swagger';
 import 'dotenv/config';
 import { Elysia } from 'elysia';
@@ -51,15 +52,21 @@ initConnections().then(() => {
                 },
             }),
         )
+        // Add static file serving for public directory
+        .use(
+            staticPlugin({
+                assets: './public',
+                prefix: '',
+            }),
+        )
         // Add HTTP status code plugin
         .use(HttpStatusCode())
         // Add HTTP logger middleware
         .use(httpLoggerMiddleware)
-        .get('/', () => ({
-            message: 'Welcome to LetLetMe API',
-            version: '1.0.0',
-            docs: '/swagger',
-        }))
+        .get('/', ({ set }) => {
+            set.headers['Content-Type'] = 'text/html';
+            return Bun.file('./public/index.html');
+        })
         // Mount the v1 API routes
         .use(v1Routes)
         .listen(process.env.API_PORT ?? 3000);

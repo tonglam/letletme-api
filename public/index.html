@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LetLetMe API - Fantasy Premier League API</title>
+        <meta
+            name="description"
+            content="LetLetMe API provides comprehensive Fantasy Premier League (FPL) data for developers. Access tournament, player, match, and statistics data through our RESTful API."
+        />
+        <meta
+            name="keywords"
+            content="FPL API, Fantasy Premier League, football data, soccer API, fantasy football, LetLetMe API"
+        />
+        <meta name="author" content="Qitong Lan" />
+
+        <!-- Favicon -->
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://api.letletme.com/" />
+        <meta
+            property="og:title"
+            content="LetLetMe API - Fantasy Premier League API"
+        />
+        <meta
+            property="og:description"
+            content="Access comprehensive Fantasy Premier League data through our RESTful API. Perfect for developers building FPL applications."
+        />
+        <meta property="og:image" content="/favicon.svg" />
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://api.letletme.com/" />
+        <meta
+            property="twitter:title"
+            content="LetLetMe API - Fantasy Premier League API"
+        />
+        <meta
+            property="twitter:description"
+            content="Access comprehensive Fantasy Premier League data through our RESTful API. Perfect for developers building FPL applications."
+        />
+        <meta property="twitter:image" content="/favicon.svg" />
+
+        <!-- Theme Color -->
+        <meta name="theme-color" content="#37003c" />
+
+        <style>
+            :root {
+                --primary-color: #37003c;
+                --accent-color: #00ff87;
+                --text-color: #333;
+                --light-bg: #f8f9fa;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                    Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue',
+                    sans-serif;
+                line-height: 1.6;
+                color: var(--text-color);
+                margin: 0;
+                padding: 0;
+                background-color: var(--light-bg);
+            }
+
+            header {
+                background-color: var(--primary-color);
+                color: white;
+                padding: 2rem 0;
+                text-align: center;
+            }
+
+            .logo {
+                width: 80px;
+                height: 80px;
+                margin-bottom: 1rem;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
+
+            h1 {
+                margin: 0;
+                font-size: 2.5rem;
+            }
+
+            h2 {
+                color: var(--primary-color);
+                margin-top: 2rem;
+                border-bottom: 2px solid var(--accent-color);
+                padding-bottom: 0.5rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+                opacity: 0.8;
+            }
+
+            .card {
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                padding: 1.5rem;
+                margin: 1.5rem 0;
+                transition: transform 0.3s ease;
+            }
+
+            .card:hover {
+                transform: translateY(-5px);
+            }
+
+            .card h3 {
+                color: var(--primary-color);
+                margin-top: 0;
+            }
+
+            .btn {
+                display: inline-block;
+                background-color: var(--accent-color);
+                color: var(--primary-color);
+                padding: 0.8rem 1.5rem;
+                text-decoration: none;
+                border-radius: 4px;
+                font-weight: bold;
+                transition: all 0.3s ease;
+                margin-right: 1rem;
+            }
+
+            .btn:hover {
+                background-color: #00cc6a;
+                transform: scale(1.05);
+            }
+
+            .github-btn {
+                display: inline-flex;
+                align-items: center;
+                background-color: #24292e;
+                color: white;
+                padding: 0.8rem 1.5rem;
+                text-decoration: none;
+                border-radius: 4px;
+                font-weight: bold;
+                transition: all 0.3s ease;
+            }
+
+            .github-btn:hover {
+                background-color: #1b1f23;
+                transform: scale(1.05);
+            }
+
+            .github-btn svg {
+                margin-right: 0.5rem;
+                width: 20px;
+                height: 20px;
+            }
+
+            footer {
+                background-color: var(--primary-color);
+                color: white;
+                text-align: center;
+                padding: 2rem 0;
+                margin-top: 2rem;
+            }
+
+            .footer-content {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 2rem;
+            }
+
+            .footer-section {
+                flex: 1;
+                min-width: 250px;
+                margin: 1rem;
+                text-align: left;
+            }
+
+            .footer-section:last-child {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .footer-section h4 {
+                color: var(--accent-color);
+                margin-bottom: 1rem;
+                font-size: 1.2rem;
+            }
+
+            .footer-section ul {
+                list-style: none;
+                padding: 0;
+            }
+
+            .footer-section ul li {
+                margin-bottom: 0.5rem;
+            }
+
+            .footer-section a {
+                color: white;
+                text-decoration: none;
+                transition: color 0.3s ease;
+            }
+
+            .footer-section a:hover {
+                color: var(--accent-color);
+                text-decoration: underline;
+            }
+
+            .footer-bottom {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding-top: 1.5rem;
+                margin-top: 1.5rem;
+            }
+
+            .endpoints {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 1.5rem;
+                margin-top: 1.5rem;
+            }
+
+            .actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1rem;
+                margin-top: 1rem;
+            }
+
+            .features {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 1.5rem;
+                margin-top: 1.5rem;
+            }
+
+            .feature-card {
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                padding: 1.5rem;
+                text-align: center;
+                transition:
+                    transform 0.3s ease,
+                    box-shadow 0.3s ease;
+            }
+
+            .feature-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            .feature-icon {
+                font-size: 2.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .feature-card h3 {
+                color: var(--primary-color);
+                margin-top: 0;
+                margin-bottom: 0.5rem;
+            }
+
+            .feature-card p {
+                margin: 0;
+                color: #666;
+            }
+
+            .website-info {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 2rem;
+                margin-top: 1.5rem;
+            }
+
+            .website-text {
+                flex: 1;
+                min-width: 250px;
+            }
+
+            .website-text h4 {
+                color: var(--primary-color);
+                margin-top: 0;
+                margin-bottom: 0.5rem;
+            }
+
+            .website-text a {
+                color: var(--primary-color);
+                font-weight: bold;
+                text-decoration: none;
+                border-bottom: 2px solid var(--accent-color);
+                transition: all 0.3s ease;
+            }
+
+            .website-text a:hover {
+                color: var(--accent-color);
+            }
+
+            .qr-code {
+                padding: 1rem;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .qr-tip {
+                text-align: center;
+                margin-top: 0.5rem;
+                font-size: 0.8rem;
+                color: #666;
+            }
+
+            .footer-qr {
+                background: white;
+                border-radius: 8px;
+                padding: 0.75rem;
+                display: inline-block;
+                margin-top: 0.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
+            .footer-qr .qr-tip {
+                color: #333;
+                margin-bottom: 0;
+                margin-top: 0.5rem;
+                font-weight: 500;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <img src="/favicon.svg" alt="LetLetMe API Logo" class="logo" />
+            <h1>LetLetMe API</h1>
+            <p class="subtitle">
+                Powerful Fantasy Premier League API for developers
+            </p>
+        </header>
+
+        <div class="container">
+            <div class="card">
+                <h3>About LetLetMe API</h3>
+                <p>
+                    This API is specifically designed for Fantasy Premier League
+                    (FPL) data and powers the LetLetMe website ecosystem.
+                    LetLetMe provides FPL managers with powerful tools for
+                    analysis, statistics, and performance tracking.
+                </p>
+                <div class="website-info">
+                    <div class="website-text">
+                        <h4>Visit our website</h4>
+                        <p>
+                            Explore the full LetLetMe experience at
+                            <a
+                                href="https://letletme.top"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                >letletme.top</a
+                            >
+                        </p>
+                        <p>
+                            Scan the QR code with WeChat to access our mini
+                            program on your mobile device.
+                        </p>
+                    </div>
+                    <div class="qr-code">
+                        <img
+                            src="/miniprogram.webp"
+                            alt="LetLetMe QR Code"
+                            width="150"
+                            height="150"
+                        />
+                        <p class="qr-tip">Scan with WeChat</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Resources</h3>
+                <p>
+                    Explore our API documentation and source code to get started
+                    with integrating LetLetMe Fantasy Premier League data into
+                    your applications. Our comprehensive API provides real-time
+                    access to FPL tournaments, players, matches, and statistics.
+                </p>
+                <div class="actions">
+                    <a href="/swagger" class="btn">View Swagger Docs</a>
+                    <a
+                        href="https://github.com/tonglam/letletme-api"
+                        class="github-btn"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path
+                                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+                            ></path>
+                        </svg>
+                        View on GitHub
+                    </a>
+                </div>
+            </div>
+
+            <h2>Available Endpoints</h2>
+            <div class="endpoints">
+                <div class="card">
+                    <h3>Tournament Data</h3>
+                    <p>
+                        Access information about FPL tournaments, leagues, and
+                        competitions.
+                    </p>
+                    <code>/v1/tournament</code>
+                </div>
+
+                <div class="card">
+                    <h3>Player Information</h3>
+                    <p>Retrieve detailed FPL player statistics and profiles.</p>
+                    <code>/v1/player</code>
+                </div>
+
+                <div class="card">
+                    <h3>Match Entries</h3>
+                    <p>Get data about upcoming and scheduled FPL matches.</p>
+                    <code>/v1/entry</code>
+                </div>
+
+                <div class="card">
+                    <h3>Live Matches</h3>
+                    <p>Real-time updates for ongoing FPL matches.</p>
+                    <code>/v1/live</code>
+                </div>
+
+                <div class="card">
+                    <h3>Statistics</h3>
+                    <p>Comprehensive FPL statistics for teams and players.</p>
+                    <code>/v1/stat</code>
+                </div>
+
+                <div class="card">
+                    <h3>Match Summaries</h3>
+                    <p>Post-match summaries and analysis for FPL games.</p>
+                    <code>/v1/summary</code>
+                </div>
+            </div>
+
+            <h2>Getting Started</h2>
+            <div class="card">
+                <h3>Quick Start Guide</h3>
+                <p>
+                    To use the LetLetMe API, make HTTP requests to the
+                    appropriate endpoints. All responses are returned in JSON
+                    format.
+                </p>
+                <p>Example request:</p>
+                <pre><code>curl -X GET http://localhost:3000/v1/tournament/list</code></pre>
+            </div>
+
+            <h2>Features</h2>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>High Performance</h3>
+                    <p>
+                        Built with Bun and Elysia for lightning-fast response
+                        times and efficient resource usage.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure</h3>
+                    <p>
+                        Implements industry-standard security practices to
+                        protect your FPL data and API access.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Comprehensive Data</h3>
+                    <p>
+                        Access detailed FPL statistics, match information,
+                        player profiles, and tournament data.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>RESTful Design</h3>
+                    <p>
+                        Intuitive API design following REST principles for easy
+                        integration with any FPL platform.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>LetLetMe API</h4>
+                    <p>Powerful Fantasy Premier League API for developers</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="/swagger">API Documentation</a></li>
+                        <li>
+                            <a
+                                href="https://github.com/tonglam/letletme-api"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                >GitHub Repository</a
+                            >
+                        </li>
+                        <li>
+                            <a
+                                href="https://letletme.top"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                >LetLetMe Website</a
+                            >
+                        </li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>WeChat Mini Program</h4>
+                    <div class="footer-qr">
+                        <img
+                            src="/miniprogram.webp"
+                            alt="LetLetMe QR Code"
+                            width="100"
+                            height="100"
+                        />
+                        <p class="qr-tip">Scan with WeChat</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LetLetMe API. All rights reserved.</p>
+            </div>
+        </footer>
+    </body>
+</html>
