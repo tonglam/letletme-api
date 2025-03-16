@@ -46,10 +46,12 @@ PM2_ARGS="--name letletme-api --log ./logs/app.log --error ./logs/error.log --ti
 echo "Deploying application with PM2..."
 
 # Check if the application is already running in PM2
-# Use || true to prevent the script from exiting if the command fails
-pm2 list | grep -q "letletme-api" || true
+PM2_PROCESS_EXISTS=false
+if pm2 list | grep -q "letletme-api"; then
+    PM2_PROCESS_EXISTS=true
+fi
 
-if [ $? -eq 0 ]; then
+if [ "$PM2_PROCESS_EXISTS" = true ]; then
     # Application exists, reload it
     echo "Reloading existing PM2 process..."
     pm2 reload letletme-api
