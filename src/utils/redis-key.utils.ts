@@ -7,43 +7,81 @@
  * Service names for type safety
  */
 export const ServiceName = {
-    EVENT: 'event',
-    FIXTURE: 'fixture',
-    TEAM: 'team',
-    PLAYER: 'player',
-    LEAGUE: 'league',
-    ENTRY: 'entry',
-    SUMMARY: 'summary',
-    LIVE: 'live',
-    TOURNAMENT: 'tournament',
-    STATISTIC: 'statistic',
-    NOTICE: 'notice',
-    SYSTEM: 'system',
+    EVENT: 'EventEntity',
+    EVENT_FIXTURE: 'EventFixtureEntity',
+    EVENT_LIVE: 'EventLiveEntity',
+    EVENT_LIVE_EXPLAIN: 'EventLiveExplainEntity',
+    TEAM: 'TeamEntity',
+    PLAYER: 'PlayerEntity',
+    PLAYER_STAT: 'PlayerStatEntity',
+    PLAYER_HISTORY: 'PlayerHistoryEntity',
+    PLAYER_VALUE: 'PlayerValueEntity',
+    STANDING: 'StandingEntity',
+    EVENT_OVERALL_RESULT: 'EventOverallResult',
 } as const;
 
 export type ServiceName = (typeof ServiceName)[keyof typeof ServiceName];
 
 /**
- * Base key generator with service prefix
+ * Generate a Redis key with consistent format
  */
 const generateKey = (
-    service: ServiceName,
-    ...parts: (string | number)[]
+    service: string,
+    ...parts: Array<string | number>
 ): string => {
-    return [service, ...parts].join(':');
+    return [service, ...parts].join('::');
 };
 
 /**
  * Event keys
  */
 export const eventKeys = {
+    /**
+     * Get current event cache key
+     */
     currentEvent: (): string => generateKey(ServiceName.EVENT, 'current'),
+
+    /**
+     * Get event deadlines for a season
+     * Returns a hash where:
+     * - Keys are event numbers (1-38)
+     * - Values are deadline timestamps
+     */
     eventDeadlines: (season: string | number): string =>
-        generateKey(ServiceName.EVENT, 'deadlines', season),
+        generateKey(ServiceName.EVENT, season),
+
+    /**
+     * Get fixtures for a specific event in a season
+     */
+    eventFixtures: (
+        season: string | number,
+        eventId: string | number,
+    ): string =>
+        generateKey(ServiceName.EVENT_FIXTURE, season, 'event', eventId),
+
+    /**
+     * Get live data for an event
+     */
+    eventLive: (eventId: string | number): string =>
+        generateKey(ServiceName.EVENT_LIVE, eventId),
+
+    /**
+     * Get live explanations for an event
+     */
+    eventLiveExplain: (eventId: string | number): string =>
+        generateKey(ServiceName.EVENT_LIVE_EXPLAIN, eventId),
+
+    /**
+     * Get overall results for a season
+     */
+    eventOverallResult: (season: string | number): string =>
+        generateKey(ServiceName.EVENT_OVERALL_RESULT, season),
+
+    /**
+     * Get average scores for a season
+     */
     averageScores: (season: string | number): string =>
-        generateKey(ServiceName.EVENT, 'average-scores', season),
-    eventInfo: (eventId: string | number): string =>
-        generateKey(ServiceName.EVENT, 'info', eventId),
+        generateKey(ServiceName.EVENT, season, 'averageScores'),
 };
 
 /**
@@ -51,9 +89,9 @@ export const eventKeys = {
  */
 export const fixtureKeys = {
     eventFixtures: (eventId: string | number): string =>
-        generateKey(ServiceName.FIXTURE, 'event', eventId),
+        generateKey(ServiceName.EVENT_FIXTURE, 'event', eventId),
     fixtureInfo: (fixtureId: string | number): string =>
-        generateKey(ServiceName.FIXTURE, 'info', fixtureId),
+        generateKey(ServiceName.EVENT_FIXTURE, 'info', fixtureId),
 };
 
 /**
@@ -65,9 +103,9 @@ export const teamKeys = {
     teamInfo: (teamId: string | number): string =>
         generateKey(ServiceName.TEAM, 'info', teamId),
     teamNames: (season: string | number): string =>
-        generateKey(ServiceName.TEAM, 'names', season),
+        generateKey(ServiceName.TEAM, season, 'name'),
     teamShortNames: (season: string | number): string =>
-        generateKey(ServiceName.TEAM, 'short-names', season),
+        generateKey(ServiceName.TEAM, season, 'shortName'),
 };
 
 /**
@@ -79,9 +117,9 @@ export const playerKeys = {
     playerStats: (
         playerId: string | number,
         eventId: string | number,
-    ): string => generateKey(ServiceName.PLAYER, 'stats', playerId, eventId),
+    ): string => generateKey(ServiceName.PLAYER_STAT, playerId, eventId),
     playerHistory: (playerId: string | number): string =>
-        generateKey(ServiceName.PLAYER, 'history', playerId),
+        generateKey(ServiceName.PLAYER_HISTORY, playerId),
 };
 
 /**
@@ -89,9 +127,9 @@ export const playerKeys = {
  */
 export const leagueKeys = {
     leagueInfo: (leagueId: string | number): string =>
-        generateKey(ServiceName.LEAGUE, 'info', leagueId),
+        generateKey(ServiceName.STANDING, 'info', leagueId),
     leagueStandings: (leagueId: string | number): string =>
-        generateKey(ServiceName.LEAGUE, 'standings', leagueId),
+        generateKey(ServiceName.STANDING, 'standings', leagueId),
 };
 
 /**
@@ -99,11 +137,11 @@ export const leagueKeys = {
  */
 export const entryKeys = {
     entryInfo: (entryId: string | number): string =>
-        generateKey(ServiceName.ENTRY, 'info', entryId),
+        generateKey(ServiceName.PLAYER_VALUE, 'info', entryId),
     entryHistory: (entryId: string | number): string =>
-        generateKey(ServiceName.ENTRY, 'history', entryId),
+        generateKey(ServiceName.PLAYER_HISTORY, 'history', entryId),
     entryPicks: (entryId: string | number, eventId: string | number): string =>
-        generateKey(ServiceName.ENTRY, 'picks', entryId, eventId),
+        generateKey(ServiceName.PLAYER_VALUE, 'picks', entryId, eventId),
 };
 
 /**
@@ -111,8 +149,9 @@ export const entryKeys = {
  */
 export const summaryKeys = {
     gameweekSummary: (eventId: string | number): string =>
-        generateKey(ServiceName.SUMMARY, 'gameweek', eventId),
-    overallSummary: (): string => generateKey(ServiceName.SUMMARY, 'overall'),
+        generateKey(ServiceName.PLAYER_VALUE, 'gameweek', eventId),
+    overallSummary: (): string =>
+        generateKey(ServiceName.PLAYER_VALUE, 'overall'),
 };
 
 /**
@@ -120,9 +159,9 @@ export const summaryKeys = {
  */
 export const liveKeys = {
     liveScores: (eventId: string | number): string =>
-        generateKey(ServiceName.LIVE, 'scores', eventId),
+        generateKey(ServiceName.EVENT_LIVE, 'scores', eventId),
     liveBonus: (eventId: string | number): string =>
-        generateKey(ServiceName.LIVE, 'bonus', eventId),
+        generateKey(ServiceName.EVENT_LIVE, 'bonus', eventId),
 };
 
 /**
@@ -130,9 +169,9 @@ export const liveKeys = {
  */
 export const tournamentKeys = {
     tournamentInfo: (tournamentId: string | number): string =>
-        generateKey(ServiceName.TOURNAMENT, 'info', tournamentId),
+        generateKey(ServiceName.STANDING, 'info', tournamentId),
     tournamentStandings: (tournamentId: string | number): string =>
-        generateKey(ServiceName.TOURNAMENT, 'standings', tournamentId),
+        generateKey(ServiceName.STANDING, 'standings', tournamentId),
 };
 
 /**
@@ -140,18 +179,18 @@ export const tournamentKeys = {
  */
 export const statisticKeys = {
     playerStats: (playerId: string | number): string =>
-        generateKey(ServiceName.STATISTIC, 'player', playerId),
+        generateKey(ServiceName.PLAYER_STAT, playerId),
     teamStats: (teamId: string | number): string =>
-        generateKey(ServiceName.STATISTIC, 'team', teamId),
+        generateKey(ServiceName.STANDING, 'team', teamId),
 };
 
 /**
  * Notice keys
  */
 export const noticeKeys = {
-    allNotices: (): string => generateKey(ServiceName.NOTICE, 'all'),
+    allNotices: (): string => generateKey(ServiceName.PLAYER_VALUE, 'all'),
     noticeInfo: (noticeId: string | number): string =>
-        generateKey(ServiceName.NOTICE, 'info', noticeId),
+        generateKey(ServiceName.PLAYER_VALUE, 'info', noticeId),
 };
 
 /**
@@ -159,6 +198,6 @@ export const noticeKeys = {
  */
 export const systemKeys = {
     config: (key: string): string =>
-        generateKey(ServiceName.SYSTEM, 'config', key),
-    status: (): string => generateKey(ServiceName.SYSTEM, 'status'),
+        generateKey(ServiceName.PLAYER_VALUE, 'config', key),
+    status: (): string => generateKey(ServiceName.PLAYER_VALUE, 'status'),
 };

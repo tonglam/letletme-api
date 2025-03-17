@@ -1,24 +1,14 @@
 import { Elysia, t } from 'elysia';
-import { database } from '../../db';
 import { errorHandler } from '../../plugins/error-handler.plugin';
-import { redis } from '../../redis';
+import { SystemService } from '../../services/system.service';
 
 export const systemRoutes = new Elysia()
     .use(errorHandler)
     .get(
         '/health',
         async () => {
-            const dbStatus = await database.checkConnection();
-            const redisStatus = redis.getClient().status === 'ready';
-
-            return {
-                status: 'ok',
-                timestamp: new Date().toISOString(),
-                services: {
-                    database: dbStatus ? 'healthy' : 'unhealthy',
-                    redis: redisStatus ? 'healthy' : 'unhealthy',
-                },
-            };
+            const healthStatus = await SystemService.checkHealth();
+            return healthStatus;
         },
         {
             response: t.Object({
@@ -26,7 +16,8 @@ export const systemRoutes = new Elysia()
                 timestamp: t.String(),
                 services: t.Object({
                     database: t.String(),
-                    redis: t.String(),
+                    dataRedis: t.String(),
+                    cacheRedis: t.String(),
                 }),
             }),
             detail: {
@@ -36,23 +27,15 @@ export const systemRoutes = new Elysia()
             },
         },
     )
-    .get(
-        '/version',
-        () => {
-            return {
-                name: 'LetLetMe API',
-                version: '1.0.0',
-            };
+    .get('/version', () => SystemService.getVersion(), {
+        response: t.Object({
+            name: t.String(),
+            version: t.String(),
+            environment: t.String(),
+        }),
+        detail: {
+            tags: ['system'],
+            summary: 'API version information',
+            description: 'Returns information about the API version',
         },
-        {
-            response: t.Object({
-                name: t.String(),
-                version: t.String(),
-            }),
-            detail: {
-                tags: ['system'],
-                summary: 'API version information',
-                description: 'Returns information about the API version',
-            },
-        },
-    );
+    });

@@ -9,7 +9,9 @@ export const EventDeadlineSchema = t.Object({
     utcDeadline: t.String(),
 });
 
-export const EventScoresSchema = t.Record(t.String(), t.Number());
+export const EventScoresSchema = t.Object({
+    scores: t.Record(t.String(), t.Number()),
+});
 
 export const EventDataSchema = t.Object({
     event: t.Number(),
@@ -45,7 +47,9 @@ export type EventDeadlines = {
  * Value: average score for the event
  */
 export type EventScores = {
-    [event: string]: number;
+    scores: {
+        [event: string]: number;
+    };
 };
 
 /**

@@ -2,148 +2,161 @@
  * Event Utilities
  * Helper functions for event-related operations
  */
-import { eventConfig } from '../config/event.config';
-import { redis } from '../redis';
+import { SEASON_CONFIG } from '../config/app.config';
+import {
+    CacheServiceName,
+    serviceTTLRules,
+} from '../config/cache.redis.config';
+import { logger } from '../config/logger.config';
+import { cacheRedis, dataRedis } from '../redis';
 import type { EventDeadline, EventDeadlines } from '../types/event.type';
 import { eventKeys } from './redis-key.utils';
-
-/**
- * Get data from Redis with error handling
- */
-const getRedisData = async <T>(key: string): Promise<T | null> => {
-    try {
-        return await redis.getJson<T>(key);
-    } catch (error) {
-        console.error(`Error getting data from Redis (${key}):`, error);
-        return null;
-    }
-};
 
 /**
  * Get event deadlines from Redis
  */
 export const getEventDeadlinesFromRedis = async (
     season: string = getCurrentSeason(),
-): Promise<EventDeadlines> => {
-    const eventDeadlines = await getRedisData<EventDeadlines>(
-        eventKeys.eventDeadlines(season),
-    );
-
-    if (!eventDeadlines || Object.keys(eventDeadlines).length === 0) {
-        throw new Error(`Event deadlines not found for season ${season}`);
+): Promise<EventDeadlines | null> => {
+    try {
+        const key = eventKeys.eventDeadlines(season);
+        const data = await dataRedis.hgetall(key);
+        if (!data || Object.keys(data).length === 0) {
+            return null;
+        }
+        // Convert hash to EventDeadlines format
+        const deadlines: EventDeadlines = {};
+        for (const [event, deadline] of Object.entries(data)) {
+            try {
+                deadlines[event] = JSON.parse(deadline);
+            } catch (parseErr) {
+                logger.error(
+                    { parseErr, event, deadline },
+                    'Failed to parse deadline JSON',
+                );
+                return null;
+            }
+        }
+        return deadlines;
+    } catch (err) {
+        logger.error({ err }, 'Failed to get event deadlines from Redis');
+        return null;
     }
-
-    return eventDeadlines;
 };
 
 /**
  * Get current season based on date
+ * @returns Season in format "2425" for 2024/25
  */
 export const getCurrentSeason = (date: Date = new Date()): string => {
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
 
-    if (month >= eventConfig.season.startMonth) {
-        return `${year}-${(year + 1).toString().slice(2)}`;
+    if (month >= SEASON_CONFIG.SEASON.START_MONTH) {
+        // Return format "2425" for 2024/25
+        return `${year.toString().slice(2)}${(year + 1).toString().slice(2)}`;
     }
-    return `${year - 1}-${year.toString().slice(2)}`;
+    // Return format "2324" for 2023/24
+    return `${(year - 1).toString().slice(2)}${year.toString().slice(2)}`;
 };
 
 /**
- * Determine current event and next deadline
+ * Determine current event and deadline based on date
  */
 export const determineCurrentEventAndDeadline = (
     currentDate: Date,
     eventDeadlines: EventDeadlines,
 ): EventDeadline => {
-    const currentTimestamp = currentDate.getTime();
-    const events = Object.entries(eventDeadlines);
-    const sortedEvents = events.sort(
-        ([, a], [, b]) => new Date(a).getTime() - new Date(b).getTime(),
+    // Convert deadlines to array for easier processing
+    const deadlines = Object.entries(eventDeadlines).map(
+        ([event, utcDeadline]) => ({
+            event: parseInt(event, 10),
+            utcDeadline,
+        }),
     );
 
-    const nextEvent = sortedEvents.find(
-        ([, deadline]) => new Date(deadline).getTime() > currentTimestamp,
-    );
+    // Sort by deadline time
+    deadlines.sort((a, b) => {
+        const timeA = new Date(a.utcDeadline).getTime();
+        const timeB = new Date(b.utcDeadline).getTime();
+        return timeA - timeB;
+    });
 
-    if (!nextEvent) {
-        const lastEvent = sortedEvents[sortedEvents.length - 1];
-        return {
-            event: parseInt(lastEvent[0], 10),
-            utcDeadline: lastEvent[1],
-        };
+    // Find current event based on deadline
+    const currentTime = currentDate.getTime();
+    for (let i = 0; i < deadlines.length; i++) {
+        const deadline = deadlines[i];
+        const deadlineTime = new Date(deadline.utcDeadline).getTime();
+
+        if (currentTime < deadlineTime) {
+            // If this is the first deadline, return it
+            if (i === 0) {
+                return deadline;
+            }
+            // Otherwise return the previous event
+            return deadlines[i - 1];
+        }
     }
 
-    const nextEventIndex = parseInt(nextEvent[0], 10);
-    return {
-        event: nextEventIndex - 1,
-        utcDeadline: nextEvent[1],
-    };
-};
-
-/**
- * Cache operations for current event
- */
-export const currentEventCache = {
-    get: async (): Promise<number | null> => {
-        try {
-            const data = await redis.getJson<{ event: number }>(
-                eventKeys.currentEvent(),
-            );
-            return data?.event || null;
-        } catch (error) {
-            console.error('Cache read error:', error);
-            return null;
-        }
-    },
-
-    set: async (event: number): Promise<void> => {
-        try {
-            await redis.setJson(
-                eventKeys.currentEvent(),
-                { event },
-                eventConfig.cache.ttl,
-            );
-        } catch (error) {
-            console.error('Cache write error:', error);
-        }
-    },
+    // If all deadlines have passed, return the last event
+    return deadlines[deadlines.length - 1];
 };
 
 /**
  * Get and cache current event
  */
 export const getCurrentEvent = async (): Promise<number | null> => {
-    // Try to get from cache first
-    const cachedEvent = await currentEventCache.get();
-    if (cachedEvent !== null) {
-        return cachedEvent;
-    }
-
-    // Calculate current event from deadlines
     try {
+        // Try to get from cache first
+        const cachedEvent = await cacheRedis.get(eventKeys.currentEvent());
+        if (cachedEvent) {
+            try {
+                const parsed = JSON.parse(cachedEvent);
+                if (parsed && typeof parsed.event === 'number') {
+                    return parsed.event;
+                }
+            } catch (parseErr) {
+                logger.warn(
+                    { parseErr },
+                    'Failed to parse cached event, falling back to Redis',
+                );
+            }
+        }
+
+        // Get event deadlines
         const eventDeadlines = await getEventDeadlinesFromRedis();
+        if (!eventDeadlines) {
+            return null;
+        }
+
+        // Determine current event
         const currentDate = new Date();
         const { event } = determineCurrentEventAndDeadline(
             currentDate,
             eventDeadlines,
         );
 
-        // Cache the calculated event
-        await currentEventCache.set(event);
+        // Cache the result with TTL
+        const ttl = serviceTTLRules[CacheServiceName.EVENT];
+        await cacheRedis.set(
+            eventKeys.currentEvent(),
+            JSON.stringify({ event }),
+            ttl,
+        );
+
         return event;
-    } catch (error) {
-        console.error('Error calculating current event:', error);
+    } catch (err) {
+        logger.error({ err }, 'Failed to get current event');
         return null;
     }
 };
 
 /**
- * Get next event based on current event
+ * Get next event number
  */
 export const getNextEvent = async (
     currentEvent: number,
 ): Promise<number | null> => {
     const nextEvent = currentEvent + 1;
-    return nextEvent <= eventConfig.season.totalEvents ? nextEvent : null;
+    return nextEvent <= SEASON_CONFIG.SEASON.TOTAL_GAMEWEEKS ? nextEvent : null;
 };

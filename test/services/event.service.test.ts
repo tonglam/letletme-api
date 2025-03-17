@@ -1,234 +1,138 @@
-import {
-    afterEach,
-    beforeEach,
-    describe,
-    expect,
-    it,
-    mock,
-    spyOn,
-} from 'bun:test';
-import type { Redis } from 'ioredis';
-import { eventConfig } from '../../src/config/event.config';
-import { redis } from '../../src/redis';
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
+import { dataRedis } from '../../src/redis';
 import * as eventService from '../../src/services/event.service';
 import * as eventUtils from '../../src/utils';
+import * as cacheUtils from '../../src/utils/cache.utils';
+import { eventKeys } from '../../src/utils/redis-key.utils';
 import {
     EXPECTED_SCORES,
-    MOCK_CACHE_KEY,
     MOCK_EVENT_DATA,
-    MOCK_EVENT_DEADLINE_KEY,
     MOCK_EVENT_DEADLINES,
-    MOCK_REDIS_KEY,
     MOCK_SEASON,
 } from '../data/event.data';
 
-// Counter for mock calls
-let mockGetJsonCalls = 0;
-
 describe('Event Service', () => {
     // Spy on functions
-    let getClientSpy: ReturnType<typeof spyOn>;
     let getJsonSpy: ReturnType<typeof spyOn>;
-    let setJsonSpy: ReturnType<typeof spyOn>;
-    let delSpy: ReturnType<typeof spyOn>;
+    let getFromCacheSpy: ReturnType<typeof spyOn>;
+    let setToCacheSpy: ReturnType<typeof spyOn>;
     let getCurrentSeasonSpy: ReturnType<typeof spyOn>;
     let determineCurrentEventSpy: ReturnType<typeof spyOn>;
-    let getEventDeadlinesSpy: ReturnType<typeof spyOn>;
-    let getEventAverageScoresSpy: ReturnType<typeof spyOn>;
+    let hgetallSpy: ReturnType<typeof spyOn>;
 
     beforeEach(() => {
-        // Reset counter
-        mockGetJsonCalls = 0;
-
-        // Mock redis.getClient
-        getClientSpy = spyOn(redis, 'getClient').mockImplementation(() => {
-            return {
-                hgetall: mock(async (key: string) => {
-                    if (key === MOCK_REDIS_KEY) {
-                        return MOCK_EVENT_DATA;
-                    } else if (key === MOCK_EVENT_DEADLINE_KEY) {
-                        return MOCK_EVENT_DEADLINES;
-                    }
-                    return {};
-                }),
-                ping: mock(async () => 'PONG'),
-            } as unknown as Redis;
-        });
-
-        // Mock redis.getJson
-        getJsonSpy = spyOn(redis, 'getJson').mockImplementation(
+        // Mock Redis operations
+        getJsonSpy = spyOn(dataRedis, 'getJson').mockImplementation(
             async <T>(key: string): Promise<T | null> => {
-                if (key === MOCK_CACHE_KEY) {
-                    // First call returns null (cache miss), second call returns cached data
-                    if (mockGetJsonCalls === 0) {
-                        mockGetJsonCalls++;
-                        return null;
-                    }
-                    return EXPECTED_SCORES as unknown as T;
-                } else if (key === eventConfig.cache.key) {
-                    // Return null for the first call to simulate cache miss
-                    if (mockGetJsonCalls === 0) {
-                        mockGetJsonCalls++;
-                        return null;
-                    }
-                    // Return cached event and deadline for subsequent calls
-                    return {
-                        event: 29,
-                        utcDeadline: '2025-04-01T17:15:00Z',
-                    } as unknown as T;
+                if (key === eventKeys.eventOverallResult(MOCK_SEASON)) {
+                    return MOCK_EVENT_DATA as unknown as T;
                 }
                 return null;
             },
         );
 
-        // Mock redis.setJson
-        setJsonSpy = spyOn(redis, 'setJson').mockImplementation(async () => {});
+        // Mock Redis hgetall
+        hgetallSpy = spyOn(dataRedis, 'hgetall').mockImplementation(
+            async (key: string): Promise<Record<string, string>> => {
+                if (key === eventKeys.eventDeadlines(MOCK_SEASON)) {
+                    // Convert deadlines to JSON strings
+                    const deadlines: Record<string, string> = {};
+                    for (const [eventId, deadline] of Object.entries(
+                        MOCK_EVENT_DEADLINES,
+                    )) {
+                        deadlines[eventId] = JSON.stringify(deadline);
+                    }
+                    return deadlines;
+                }
+                if (key === eventKeys.eventOverallResult(MOCK_SEASON)) {
+                    return MOCK_EVENT_DATA;
+                }
+                return {};
+            },
+        );
 
-        // Mock redis.del
-        delSpy = spyOn(redis, 'del').mockImplementation(async () => {});
+        // Mock cache operations
+        getFromCacheSpy = spyOn(cacheUtils, 'getFromCache').mockImplementation(
+            async () => null,
+        );
+        setToCacheSpy = spyOn(cacheUtils, 'setToCache').mockImplementation(
+            async () => {},
+        );
 
-        // Mock getCurrentSeason
+        // Mock utils functions
         getCurrentSeasonSpy = spyOn(
             eventUtils,
             'getCurrentSeason',
-        ).mockImplementation(() => MOCK_SEASON);
-
-        // Mock determineCurrentEventAndDeadline
+        ).mockReturnValue(MOCK_SEASON);
         determineCurrentEventSpy = spyOn(
             eventUtils,
             'determineCurrentEventAndDeadline',
-        ).mockImplementation(() => ({
-            event: 29,
-            utcDeadline: '2025-04-01T17:15:00Z',
-        }));
-
-        // Mock getEventDeadlinesFromRedis
-        getEventDeadlinesSpy = spyOn(
-            eventUtils,
-            'getEventDeadlinesFromRedis',
-        ).mockImplementation(async () => ({
-            1: MOCK_EVENT_DEADLINES['1'],
-            2: MOCK_EVENT_DEADLINES['2'],
-            3: MOCK_EVENT_DEADLINES['3'],
-            4: MOCK_EVENT_DEADLINES['4'],
-            5: MOCK_EVENT_DEADLINES['5'],
-            38: MOCK_EVENT_DEADLINES['38'],
-        }));
+        ).mockReturnValue({
+            event: 3,
+            utcDeadline: MOCK_EVENT_DEADLINES['3'],
+        });
     });
 
     afterEach(() => {
         // Restore original implementations
-        getClientSpy.mockRestore();
         getJsonSpy.mockRestore();
-        setJsonSpy.mockRestore();
-        delSpy.mockRestore();
+        getFromCacheSpy.mockRestore();
+        setToCacheSpy.mockRestore();
         getCurrentSeasonSpy.mockRestore();
         determineCurrentEventSpy.mockRestore();
-        getEventDeadlinesSpy.mockRestore();
-        if (getEventAverageScoresSpy) {
-            getEventAverageScoresSpy.mockRestore();
-        }
+        hgetallSpy.mockRestore();
     });
 
     describe('getCurrentEventAndDeadline', () => {
-        it('should return cached event and deadline if available', async () => {
-            // First call will miss cache, second will hit
-            await eventService.getCurrentEventAndDeadline();
+        it('should return current event and deadline', async () => {
             const result = await eventService.getCurrentEventAndDeadline();
-
             expect(result).toEqual({
-                event: 29,
-                utcDeadline: '2025-04-01T17:15:00Z',
+                event: 3,
+                utcDeadline: MOCK_EVENT_DEADLINES['3'],
             });
-            expect(getJsonSpy).toHaveBeenCalledTimes(2);
-            expect(getJsonSpy).toHaveBeenCalledWith(eventConfig.cache.key);
+            expect(getCurrentSeasonSpy).toHaveBeenCalledTimes(1);
+            expect(hgetallSpy).toHaveBeenCalledTimes(1);
+            expect(determineCurrentEventSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('should return hardcoded values on cache miss', async () => {
-            // Reset counter to ensure cache miss
-            mockGetJsonCalls = 0;
-
-            const result = await eventService.getCurrentEventAndDeadline();
-
-            expect(result).toEqual({
-                event: 29,
-                utcDeadline: '2025-04-01T17:15:00Z',
-            });
-            expect(setJsonSpy).toHaveBeenCalledWith(
-                eventConfig.cache.key,
-                {
-                    event: 29,
-                    utcDeadline: '2025-04-01T17:15:00Z',
-                },
-                eventConfig.cache.ttl,
-            );
-        });
-
-        it('should handle Redis errors gracefully', async () => {
-            // Mock Redis to throw an error
-            getJsonSpy.mockImplementation(async () => {
-                throw new Error('Redis connection error');
-            });
-
-            // The service now handles errors internally and returns fallback values
-            const result = await eventService.getCurrentEventAndDeadline();
-
-            expect(result).toEqual({
-                event: 29,
-                utcDeadline: '2025-04-01T17:15:00Z',
-            });
-        });
-
-        it('should handle empty event data gracefully', async () => {
-            // Mock empty event data
-            getEventDeadlinesSpy.mockImplementation(async () => {
-                throw new Error('No event data found');
-            });
-
-            // The service now handles errors internally and returns fallback values
-            const result = await eventService.getCurrentEventAndDeadline();
-
-            expect(result).toEqual({
-                event: 29,
-                utcDeadline: '2025-04-01T17:15:00Z',
-            });
+        it('should handle missing deadlines', async () => {
+            hgetallSpy.mockResolvedValueOnce({});
+            await expect(
+                eventService.getCurrentEventAndDeadline(),
+            ).rejects.toThrow('Event deadlines not found in Redis');
         });
     });
 
     describe('getEventAverageScores', () => {
-        it('should return cached scores if available', async () => {
-            // First call will miss cache, second will hit
-            await eventService.getEventAverageScores();
-            const result = await eventService.getEventAverageScores();
-
-            expect(result).toEqual(EXPECTED_SCORES);
-            expect(getJsonSpy).toHaveBeenCalledTimes(2);
-            expect(getJsonSpy).toHaveBeenCalledWith(MOCK_CACHE_KEY);
-        });
-
-        it('should fetch and process data from Redis on cache miss', async () => {
-            // Mock the processing of event data to return expected scores
-            getEventAverageScoresSpy = spyOn(
-                eventService,
-                'getEventAverageScores',
-            ).mockImplementation(async () => EXPECTED_SCORES);
-
+        it('should return average scores from Redis', async () => {
             const result = await eventService.getEventAverageScores();
             expect(result).toEqual(EXPECTED_SCORES);
+            expect(hgetallSpy).toHaveBeenCalledWith(
+                eventKeys.eventOverallResult(MOCK_SEASON),
+            );
         });
 
-        it('should handle Redis errors gracefully', async () => {
-            // Mock Redis to throw an error
-            getJsonSpy.mockImplementation(async () => {
-                throw new Error('Redis connection error');
+        it('should handle missing data', async () => {
+            hgetallSpy.mockResolvedValueOnce({});
+            await expect(eventService.getEventAverageScores()).rejects.toThrow(
+                'Event overall results not found in Redis',
+            );
+        });
+
+        it('should handle Redis errors', async () => {
+            hgetallSpy.mockRejectedValueOnce(new Error('Redis error'));
+            await expect(eventService.getEventAverageScores()).rejects.toThrow(
+                'Redis error',
+            );
+        });
+
+        it('should handle invalid JSON data', async () => {
+            hgetallSpy.mockResolvedValueOnce({
+                '1': 'invalid-json',
+                '2': '{"not": "java-format"}',
             });
-
-            // The service now handles errors internally and returns fallback values
             const result = await eventService.getEventAverageScores();
-
-            // Verify it returns the hardcoded values
-            expect(Object.keys(result).length).toBeGreaterThan(0);
-            expect(result['29']).toBe(40);
+            expect(result).toEqual({ scores: {} });
         });
     });
 });

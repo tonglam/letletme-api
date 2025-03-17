@@ -6,7 +6,25 @@ on:
     workflow_dispatch:
 
 jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v1
+              with:
+                  bun-version: latest
+
+            - name: Install dependencies
+              run: bun install
+
+            - name: Run route tests
+              run: bun test test/routes/*.test.ts
+
     deploy:
+        needs: test
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code

@@ -29,7 +29,7 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
         '/average-scores',
         async () => {
             const scores = await eventService.getEventAverageScores();
-            return scores || { scores: [] };
+            return scores || { scores: {} };
         },
         {
             response: EventScoresSchema,

@@ -2,20 +2,27 @@
  * Service-level cache utilities
  * Provides function-level caching capabilities using Redis hashes
  */
-import { getCacheConfig } from '../config/cache.config';
-import { redis } from '../redis';
+import { getCacheConfig } from '../config/cache.redis.config';
+import { logger } from '../config/logger.config';
+import { cacheRedis } from '../redis';
+import type { ServiceName } from './redis-key.utils';
+
+/**
+ * Generate a cache hash key for a service
+ */
+const generateHashKey = (service: ServiceName): string => `cache:${service}`;
 
 /**
  * Get data from cache hash for a service endpoint
  */
 export const getFromCache = async <T>(
-    serviceName: string,
+    serviceName: ServiceName,
     endpoint: string,
 ): Promise<T | null> => {
     try {
         const config = getCacheConfig(`/v1/${serviceName}/${endpoint}`);
-        const hashKey = `cache:${config.service}`;
-        const data = await redis.getClient().hget(hashKey, endpoint);
+        const hashKey = generateHashKey(config.service);
+        const data = await cacheRedis.hget(hashKey, endpoint);
 
         if (!data) {
             return null;
@@ -23,13 +30,17 @@ export const getFromCache = async <T>(
 
         try {
             return JSON.parse(data) as T;
-        } catch {
+        } catch (err) {
             // If data can't be parsed, remove it from cache
-            await redis.getClient().hdel(hashKey, endpoint);
+            logger.error(
+                { err, hashKey, endpoint },
+                'Failed to parse cached data',
+            );
+            await cacheRedis.hdel(hashKey, endpoint);
             return null;
         }
-    } catch (error) {
-        console.error('Cache read error:', error);
+    } catch (err) {
+        logger.error({ err, serviceName, endpoint }, 'Cache read error');
         return null;
     }
 };
@@ -38,28 +49,27 @@ export const getFromCache = async <T>(
  * Set data to cache hash for a service endpoint
  */
 export const setToCache = async <T>(
-    serviceName: string,
+    serviceName: ServiceName,
     endpoint: string,
     data: T,
     ttl?: number,
 ): Promise<void> => {
     try {
         const config = getCacheConfig(`/v1/${serviceName}/${endpoint}`);
-        const hashKey = `cache:${config.service}`;
+        const hashKey = generateHashKey(config.service);
         const serializedData = JSON.stringify(data);
-        const client = redis.getClient();
 
         // Store the data in the hash
-        await client.hset(hashKey, endpoint, serializedData);
+        await cacheRedis.hset(hashKey, endpoint, serializedData);
 
         // Set TTL on the entire hash if not already set
-        const ttlExists = await client.ttl(hashKey);
+        const ttlExists = await cacheRedis.ttl(hashKey);
         if (ttlExists === -1) {
             // -1 means no TTL set
-            await client.expire(hashKey, ttl || config.ttl);
+            await cacheRedis.expire(hashKey, ttl || config.ttl);
         }
-    } catch (error) {
-        console.error('Cache write error:', error);
+    } catch (err) {
+        logger.error({ err, serviceName, endpoint }, 'Cache write error');
     }
 };
 
@@ -67,28 +77,30 @@ export const setToCache = async <T>(
  * Delete data from cache hash for a service endpoint
  */
 export const deleteFromCache = async (
-    serviceName: string,
+    serviceName: ServiceName,
     endpoint: string,
 ): Promise<void> => {
     try {
         const config = getCacheConfig(`/v1/${serviceName}/${endpoint}`);
-        const hashKey = `cache:${config.service}`;
-        await redis.getClient().hdel(hashKey, endpoint);
-    } catch (error) {
-        console.error('Cache delete error:', error);
+        const hashKey = generateHashKey(config.service);
+        await cacheRedis.hdel(hashKey, endpoint);
+    } catch (err) {
+        logger.error({ err, serviceName, endpoint }, 'Cache delete error');
     }
 };
 
 /**
  * Delete all cached data for a service
  */
-export const clearServiceCache = async (serviceName: string): Promise<void> => {
+export const clearServiceCache = async (
+    serviceName: ServiceName,
+): Promise<void> => {
     try {
         const config = getCacheConfig(`/v1/${serviceName}/`);
-        const hashKey = `cache:${config.service}`;
-        await redis.getClient().del(hashKey);
-    } catch (error) {
-        console.error('Cache clear error:', error);
+        const hashKey = generateHashKey(config.service);
+        await cacheRedis.del(hashKey);
+    } catch (err) {
+        logger.error({ err, serviceName }, 'Cache clear error');
     }
 };
 
@@ -102,20 +114,36 @@ export const clearServiceCache = async (serviceName: string): Promise<void> => {
  * @param ttl Optional TTL override
  */
 export const createCachedFunction = <T>(
-    serviceName: string,
+    serviceName: ServiceName,
     endpoint: string,
     fn: () => Promise<T>,
     ttl?: number,
 ): (() => Promise<T>) => {
     return async () => {
-        const cachedData = await getFromCache<T>(serviceName, endpoint);
-        if (cachedData !== null) {
-            return cachedData;
+        try {
+            const cachedData = await getFromCache<T>(serviceName, endpoint);
+            if (cachedData !== null) {
+                return cachedData;
+            }
+        } catch (err) {
+            logger.error({ err, serviceName, endpoint }, 'Cache read error');
+            // Let the error propagate by continuing to the original function
         }
 
+        // Execute the original function
         const result = await fn();
+
+        // Try to cache the result if available
         if (result !== null && result !== undefined) {
-            await setToCache(serviceName, endpoint, result, ttl);
+            try {
+                await setToCache(serviceName, endpoint, result, ttl);
+            } catch (err) {
+                logger.error(
+                    { err, serviceName, endpoint },
+                    'Cache write error',
+                );
+                // Let the error propagate by continuing
+            }
         }
 
         return result;

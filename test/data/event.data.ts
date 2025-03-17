@@ -1,11 +1,11 @@
-import { eventConfig } from '../../src/config/event.config';
 import type { EventScores } from '../../src/types/event.type';
+import { ServiceName } from '../../src/utils/redis-key.utils';
 
 // Mock data
-export const MOCK_SEASON = '2425';
-export const MOCK_REDIS_KEY = `${eventConfig.redis.overallResultPrefix}${MOCK_SEASON}`;
-export const MOCK_CACHE_KEY = eventConfig.cache.averageScoresKey;
-export const MOCK_EVENT_DEADLINE_KEY = `${eventConfig.redis.keyPrefix}${MOCK_SEASON}`;
+export const MOCK_SEASON = '2324';
+export const MOCK_REDIS_KEY = `${ServiceName.EVENT_OVERALL_RESULT}::${MOCK_SEASON}`;
+export const MOCK_CACHE_KEY = 'averageScoresKey';
+export const MOCK_EVENT_DEADLINE_KEY = `${ServiceName.EVENT}::${MOCK_SEASON}`;
 
 // Sample EventOverall data format
 export const MOCK_EVENT_DATA = {
@@ -74,9 +74,11 @@ export const MOCK_EVENT_DEADLINES = {
 };
 
 export const EXPECTED_SCORES: EventScores = {
-    '1': 57,
-    '2': 69,
-    '3': 64,
-    '10': 39,
-    '20': 60,
+    scores: {
+        '1': 57,
+        '2': 69,
+        '3': 64,
+        '10': 39,
+        '20': 60,
+    },
 };
