@@ -20,6 +20,9 @@ jobs:
             - name: Create .env file
               run: |
                   cat << EOF > .env
+                  # API Configuration
+                  API_PORT=3000
+
                   # Database Configuration
                   DB_HOST=${{ secrets.DB_HOST }}
                   DB_PORT=3306
@@ -27,17 +30,20 @@ jobs:
                   DB_PASSWORD=${{ secrets.DB_PASSWORD }}
                   DB_NAME=${{ secrets.DB_NAME }}
 
-                  # API Configuration
-                  API_PORT=3000
+                  # Data Redis Configuration (Read Only)
+                  DATA_REDIS_HOST=${{ secrets.DATA_REDIS_HOST }}
+                  DATA_REDIS_PORT=6379
+                  DATA_REDIS_PASSWORD=${{ secrets.DATA_REDIS_PASSWORD }}
+                  DATA_REDIS_DB=0
 
-                  # Redis Configuration
-                  REDIS_HOST=${{ secrets.REDIS_HOST }}
-                  REDIS_PORT=6379
-                  REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-                  REDIS_DB=0
+                  # Cache Redis Configuration (Read/Write)
+                  CACHE_REDIS_HOST=${{ secrets.CACHE_REDIS_HOST }}
+                  CACHE_REDIS_PORT=6379
+                  CACHE_REDIS_PASSWORD=${{ secrets.CACHE_REDIS_PASSWORD }}
+                  CACHE_REDIS_DB=0
 
                   # Logging Configuration
-                  LOG_LEVEL=info
+                  LOG_LEVEL=debug
                   EOF
 
             - name: Install dependencies
