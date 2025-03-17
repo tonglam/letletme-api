@@ -1,5 +1,5 @@
 import { defineConfig } from 'drizzle-kit';
-import { dbConfig } from './src/config/db';
+import { dbConfig } from './src/config/db.config';
 
 // Use imported configuration
 export default defineConfig({

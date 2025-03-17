@@ -1,201 +1,109 @@
-import { Elysia, t } from 'elysia';
-import { HttpStatusCode } from 'elysia-http-status-code';
+import { Elysia, NotFoundError, t } from 'elysia';
+import { errorHandler } from '../../plugins/error-handler.plugin';
+import { PlayerService } from '../../services';
+import type { GetAllPlayersParams } from '../../types';
 
 export const playerRoutes = new Elysia({ prefix: '/players' })
-    .use(HttpStatusCode())
+    .use(errorHandler)
     // Get all players
     .get(
         '/',
         async ({ query }) => {
-            // Mock response - to be implemented with actual database queries
-            const limit = query.limit ? parseInt(query.limit as string) : 20;
-            const offset = query.offset ? parseInt(query.offset as string) : 0;
-
-            return {
-                status: 'success',
-                meta: {
-                    total: 100,
-                    limit,
-                    offset,
-                },
-                data: Array(Math.min(limit, 10))
-                    .fill(0)
-                    .map((_, i) => ({
-                        id: (i + offset + 1).toString(),
-                        name: `Player ${i + offset + 1}`,
-                        country: 'US',
-                        rating: 1500 + Math.floor(Math.random() * 1000),
-                    })),
+            const params: GetAllPlayersParams = {
+                limit: query.limit ? parseInt(query.limit) : 20,
+                offset: query.offset ? parseInt(query.offset) : 0,
+                search: query.search,
+                country: query.country,
             };
+            const players = await PlayerService.getAllPlayers(params);
+            if (!players?.data || players.data.length === 0)
+                throw new NotFoundError();
+            return players;
         },
         {
-            detail: {
-                tags: ['players'],
-                summary: 'Get all players',
-                description: 'Returns a paginated list of all players',
-                responses: {
-                    200: {
-                        description: 'List of players',
-                    },
-                },
-            },
             query: t.Object({
                 limit: t.Optional(t.String()),
                 offset: t.Optional(t.String()),
                 search: t.Optional(t.String()),
                 country: t.Optional(t.String()),
             }),
+            detail: {
+                tags: ['players'],
+                summary: 'Get all players',
+                description: 'Returns a paginated list of all players',
+            },
         },
     )
     // Get player by ID
     .get(
         '/:id',
         async ({ params }) => {
-            // Mock response - to be implemented with actual database queries
-            return {
-                status: 'success',
-                data: {
-                    id: params.id,
-                    name: `Player ${params.id}`,
-                    firstName: 'John',
-                    lastName: 'Doe',
-                    country: 'US',
-                    rating: 1800,
-                    tournaments: 15,
-                    wins: 10,
-                    losses: 5,
-                    profileImage: 'https://example.com/profiles/player1.jpg',
-                },
-            };
+            const player = await PlayerService.getPlayerById(params.id);
+            if (!player) throw new NotFoundError();
+            return player;
         },
         {
+            params: t.Object({
+                id: t.String(),
+            }),
             detail: {
                 tags: ['players'],
                 summary: 'Get player by ID',
                 description: 'Returns details of a specific player',
-                responses: {
-                    200: {
-                        description: 'Player details',
-                    },
-                    404: {
-                        description: 'Player not found',
-                    },
-                },
             },
-            params: t.Object({
-                id: t.String(),
-            }),
         },
     )
     // Get player stats
     .get(
         '/:id/stats',
         async ({ params }) => {
-            // Mock response - to be implemented with actual database queries
-            return {
-                status: 'success',
-                data: {
-                    playerId: params.id,
-                    tournamentCount: 15,
-                    matchesPlayed: 30,
-                    wins: 20,
-                    losses: 10,
-                    winRate: 0.67,
-                    averageScore: 21.5,
-                    highestScore: 29,
-                    recentForm: ['W', 'L', 'W', 'W', 'W'],
-                },
-            };
+            const stats = await PlayerService.getPlayerStats(params.id);
+            if (!stats) throw new NotFoundError();
+            return stats;
         },
         {
+            params: t.Object({
+                id: t.String(),
+            }),
             detail: {
                 tags: ['players'],
                 summary: 'Get player statistics',
                 description:
                     'Returns detailed statistics for a specific player',
-                responses: {
-                    200: {
-                        description: 'Player statistics',
-                    },
-                    404: {
-                        description: 'Player not found',
-                    },
-                },
             },
-            params: t.Object({
-                id: t.String(),
-            }),
         },
     )
     // Create new player
     .post(
         '/',
         async ({ body, set }) => {
-            // Mock response - to be implemented with actual database queries
+            const player = await PlayerService.createPlayer(body);
             set.status = 201;
-            return {
-                status: 'success',
-                message: 'Player created successfully',
-                data: {
-                    id: Math.floor(Math.random() * 1000).toString(),
-                    ...body,
-                    rating: 1500, // Default starting rating
-                },
-            };
+            return player;
         },
         {
-            detail: {
-                tags: ['players'],
-                summary: 'Create player',
-                description: 'Creates a new player',
-                responses: {
-                    201: {
-                        description: 'Player created successfully',
-                    },
-                    400: {
-                        description: 'Invalid input',
-                    },
-                },
-            },
             body: t.Object({
                 firstName: t.String(),
                 lastName: t.String(),
                 country: t.String(),
                 profileImage: t.Optional(t.String()),
             }),
+            detail: {
+                tags: ['players'],
+                summary: 'Create player',
+                description: 'Creates a new player',
+            },
         },
     )
     // Update player
     .put(
         '/:id',
         async ({ params, body }) => {
-            // Mock response - to be implemented with actual database queries
-            return {
-                status: 'success',
-                message: 'Player updated successfully',
-                data: {
-                    id: params.id,
-                    ...body,
-                },
-            };
+            const player = await PlayerService.updatePlayer(params.id, body);
+            if (!player) throw new NotFoundError();
+            return player;
         },
         {
-            detail: {
-                tags: ['players'],
-                summary: 'Update player',
-                description: 'Updates an existing player',
-                responses: {
-                    200: {
-                        description: 'Player updated successfully',
-                    },
-                    404: {
-                        description: 'Player not found',
-                    },
-                    400: {
-                        description: 'Invalid input',
-                    },
-                },
-            },
             params: t.Object({
                 id: t.String(),
             }),
@@ -205,33 +113,30 @@ export const playerRoutes = new Elysia({ prefix: '/players' })
                 country: t.Optional(t.String()),
                 profileImage: t.Optional(t.String()),
             }),
+            detail: {
+                tags: ['players'],
+                summary: 'Update player',
+                description: 'Updates an existing player',
+            },
         },
     )
     // Delete player
     .delete(
         '/:id',
         async ({ params, set }) => {
-            // Mock implementation - actually delete the player with ID params.id
-            console.log(`Deleting player with ID: ${params.id}`);
+            const deleted = await PlayerService.deletePlayer(params.id);
+            if (!deleted) throw new NotFoundError();
             set.status = 204;
             return null;
         },
         {
+            params: t.Object({
+                id: t.String(),
+            }),
             detail: {
                 tags: ['players'],
                 summary: 'Delete player',
                 description: 'Deletes an existing player',
-                responses: {
-                    204: {
-                        description: 'Player deleted successfully',
-                    },
-                    404: {
-                        description: 'Player not found',
-                    },
-                },
             },
-            params: t.Object({
-                id: t.String(),
-            }),
         },
     );

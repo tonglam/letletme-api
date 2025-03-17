@@ -1,29 +1,58 @@
 import { t } from 'elysia';
 
 /**
- * Event deadline schema
- * Information about event deadlines
+ * Event Schemas
+ * Elysia validation schemas for event-related data
  */
-export const EventDeadline = t.Object({
-    event: t.String(),
+export const EventDeadlineSchema = t.Object({
+    event: t.Number(),
     utcDeadline: t.String(),
 });
 
-/**
- * Event scores schema
- * Record of event scores
- */
-export const EventScores = t.Record(t.String(), t.Number());
+export const EventScoresSchema = t.Record(t.String(), t.Number());
 
-/**
- * Internal event data type
- */
-export const EventData = t.Object({
-    event: t.String(),
+export const EventDataSchema = t.Object({
+    event: t.Number(),
     deadline: t.String(),
+    averageScore: t.Optional(t.Number()),
 });
 
-// Export TypeScript types
-export type EventDeadline = typeof EventDeadline.static;
-export type EventScores = typeof EventScores.static;
-export type EventData = typeof EventData.static;
+/**
+ * Event Types
+ * TypeScript type definitions for event-related data
+ */
+
+/**
+ * Event deadline information
+ */
+export type EventDeadline = {
+    event: number;
+    utcDeadline: string;
+};
+
+/**
+ * Event deadlines mapping
+ * Key: event number (as string)
+ * Value: UTC deadline string
+ */
+export type EventDeadlines = {
+    [event: string]: string;
+};
+
+/**
+ * Event scores mapping
+ * Key: event number (as string)
+ * Value: average score for the event
+ */
+export type EventScores = {
+    [event: string]: number;
+};
+
+/**
+ * Event data structure
+ */
+export type EventData = {
+    event: number;
+    deadline: string;
+    averageScore?: number;
+};

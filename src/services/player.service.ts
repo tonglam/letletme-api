@@ -2,21 +2,15 @@
  * Player Service
  * Provides functionality for player-related operations
  */
+import type { GetAllPlayersParams } from '../types';
+
 export class PlayerService {
     /**
      * Get all players with pagination and filtering
-     * @param limit Maximum number of players to return
-     * @param offset Number of players to skip
-     * @param search Optional search term for player names
-     * @param country Optional filter by country
+     * @param params Pagination and filtering parameters
      * @returns Paginated list of players
      */
-    static async getAllPlayers(
-        limit: number = 20,
-        offset: number = 0,
-        search?: string,
-        country?: string,
-    ): Promise<{
+    static async getAllPlayers(params: GetAllPlayersParams): Promise<{
         status: string;
         meta: {
             total: number;
@@ -35,15 +29,15 @@ export class PlayerService {
             status: 'success',
             meta: {
                 total: 100,
-                limit,
-                offset,
+                limit: params.limit,
+                offset: params.offset,
             },
-            data: Array(Math.min(limit, 10))
+            data: Array(Math.min(params.limit, 10))
                 .fill(0)
                 .map((_, i) => ({
-                    id: (i + offset + 1).toString(),
-                    name: `Player ${i + offset + 1}`,
-                    country: country || 'US',
+                    id: (i + params.offset + 1).toString(),
+                    name: `Player ${i + params.offset + 1}`,
+                    country: params.country || 'US',
                     rating: 1500 + Math.floor(Math.random() * 1000),
                 })),
         };

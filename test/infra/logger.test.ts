@@ -14,7 +14,7 @@ import {
     config,
     createModuleLogger,
     logPaths,
-} from '../../src/config/logger.js';
+} from '../../src/config/logger.config.js';
 
 describe('Logger Configuration', () => {
     const originalEnv = { ...process.env };

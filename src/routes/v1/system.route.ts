@@ -1,8 +1,10 @@
 import { Elysia, t } from 'elysia';
 import { database } from '../../db';
+import { errorHandler } from '../../plugins/error-handler.plugin';
 import { redis } from '../../redis';
 
 export const systemRoutes = new Elysia()
+    .use(errorHandler)
     .get(
         '/health',
         async () => {
@@ -19,27 +21,18 @@ export const systemRoutes = new Elysia()
             };
         },
         {
+            response: t.Object({
+                status: t.String(),
+                timestamp: t.String(),
+                services: t.Object({
+                    database: t.String(),
+                    redis: t.String(),
+                }),
+            }),
             detail: {
                 tags: ['system'],
                 summary: 'Health check endpoint',
                 description: 'Check the health of the API and its dependencies',
-                responses: {
-                    200: {
-                        description: 'Health status of the API',
-                        content: {
-                            'application/json': {
-                                schema: t.Object({
-                                    status: t.String(),
-                                    timestamp: t.String(),
-                                    services: t.Object({
-                                        database: t.String(),
-                                        redis: t.String(),
-                                    }),
-                                }),
-                            },
-                        },
-                    },
-                },
             },
         },
     )
@@ -52,24 +45,14 @@ export const systemRoutes = new Elysia()
             };
         },
         {
+            response: t.Object({
+                name: t.String(),
+                version: t.String(),
+            }),
             detail: {
                 tags: ['system'],
                 summary: 'API version information',
                 description: 'Returns information about the API version',
-                responses: {
-                    200: {
-                        description: 'API version details',
-                        content: {
-                            'application/json': {
-                                schema: t.Object({
-                                    name: t.String(),
-                                    version: t.String(),
-                                    environment: t.String(),
-                                }),
-                            },
-                        },
-                    },
-                },
             },
         },
     );

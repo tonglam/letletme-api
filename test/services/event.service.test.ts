@@ -8,7 +8,7 @@ import {
     spyOn,
 } from 'bun:test';
 import type { Redis } from 'ioredis';
-import { eventConfig } from '../../src/config/event';
+import { eventConfig } from '../../src/config/event.config';
 import { redis } from '../../src/redis';
 import * as eventService from '../../src/services/event.service';
 import * as eventUtils from '../../src/utils';
@@ -73,7 +73,7 @@ describe('Event Service', () => {
                     }
                     // Return cached event and deadline for subsequent calls
                     return {
-                        event: '29',
+                        event: 29,
                         utcDeadline: '2025-04-01T17:15:00Z',
                     } as unknown as T;
                 }
@@ -98,7 +98,7 @@ describe('Event Service', () => {
             eventUtils,
             'determineCurrentEventAndDeadline',
         ).mockImplementation(() => ({
-            event: '29',
+            event: 29,
             utcDeadline: '2025-04-01T17:15:00Z',
         }));
 
@@ -106,14 +106,14 @@ describe('Event Service', () => {
         getEventDeadlinesSpy = spyOn(
             eventUtils,
             'getEventDeadlinesFromRedis',
-        ).mockImplementation(async () => [
-            { event: '1', deadline: MOCK_EVENT_DEADLINES['1'] },
-            { event: '2', deadline: MOCK_EVENT_DEADLINES['2'] },
-            { event: '3', deadline: MOCK_EVENT_DEADLINES['3'] },
-            { event: '4', deadline: MOCK_EVENT_DEADLINES['4'] },
-            { event: '5', deadline: MOCK_EVENT_DEADLINES['5'] },
-            { event: '38', deadline: MOCK_EVENT_DEADLINES['38'] },
-        ]);
+        ).mockImplementation(async () => ({
+            1: MOCK_EVENT_DEADLINES['1'],
+            2: MOCK_EVENT_DEADLINES['2'],
+            3: MOCK_EVENT_DEADLINES['3'],
+            4: MOCK_EVENT_DEADLINES['4'],
+            5: MOCK_EVENT_DEADLINES['5'],
+            38: MOCK_EVENT_DEADLINES['38'],
+        }));
     });
 
     afterEach(() => {
@@ -137,7 +137,7 @@ describe('Event Service', () => {
             const result = await eventService.getCurrentEventAndDeadline();
 
             expect(result).toEqual({
-                event: '29',
+                event: 29,
                 utcDeadline: '2025-04-01T17:15:00Z',
             });
             expect(getJsonSpy).toHaveBeenCalledTimes(2);
@@ -151,13 +151,13 @@ describe('Event Service', () => {
             const result = await eventService.getCurrentEventAndDeadline();
 
             expect(result).toEqual({
-                event: '29',
+                event: 29,
                 utcDeadline: '2025-04-01T17:15:00Z',
             });
             expect(setJsonSpy).toHaveBeenCalledWith(
                 eventConfig.cache.key,
                 {
-                    event: '29',
+                    event: 29,
                     utcDeadline: '2025-04-01T17:15:00Z',
                 },
                 eventConfig.cache.ttl,
@@ -174,7 +174,7 @@ describe('Event Service', () => {
             const result = await eventService.getCurrentEventAndDeadline();
 
             expect(result).toEqual({
-                event: '29',
+                event: 29,
                 utcDeadline: '2025-04-01T17:15:00Z',
             });
         });
@@ -189,7 +189,7 @@ describe('Event Service', () => {
             const result = await eventService.getCurrentEventAndDeadline();
 
             expect(result).toEqual({
-                event: '29',
+                event: 29,
                 utcDeadline: '2025-04-01T17:15:00Z',
             });
         });

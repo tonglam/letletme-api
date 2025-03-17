@@ -1,43 +1,23 @@
-import { Elysia, t } from 'elysia';
-import { HttpStatusCode } from 'elysia-http-status-code';
+import { Elysia, NotFoundError, t } from 'elysia';
+import { errorHandler } from '../../plugins/error-handler.plugin';
+import { TournamentService } from '../../services';
 
 export const tournamentRoutes = new Elysia({ prefix: '/tournaments' })
-    .use(HttpStatusCode())
+    .use(errorHandler)
     // Get all tournaments
     .get(
         '/',
         async () => {
-            // Mock response - to be implemented with actual database queries
-            return {
-                status: 'success',
-                data: [
-                    {
-                        id: '1',
-                        name: 'Summer Championship 2023',
-                        startDate: '2023-06-15',
-                        endDate: '2023-06-30',
-                        status: 'completed',
-                    },
-                    {
-                        id: '2',
-                        name: 'Winter Cup 2024',
-                        startDate: '2024-01-10',
-                        endDate: '2024-01-25',
-                        status: 'active',
-                    },
-                ],
-            };
+            const tournaments = await TournamentService.getAllTournaments();
+            if (!tournaments?.data || tournaments.data.length === 0)
+                throw new NotFoundError();
+            return tournaments;
         },
         {
             detail: {
                 tags: ['tournaments'],
                 summary: 'Get all tournaments',
                 description: 'Returns a list of all tournaments',
-                responses: {
-                    200: {
-                        description: 'List of tournaments',
-                    },
-                },
             },
         },
     )
@@ -45,69 +25,32 @@ export const tournamentRoutes = new Elysia({ prefix: '/tournaments' })
     .get(
         '/:id',
         async ({ params }) => {
-            // Mock response - to be implemented with actual database queries
-            return {
-                status: 'success',
-                data: {
-                    id: params.id,
-                    name: 'Summer Championship 2023',
-                    startDate: '2023-06-15',
-                    endDate: '2023-06-30',
-                    status: 'completed',
-                    venue: 'Sports Arena',
-                    location: 'New York, NY',
-                    participants: 32,
-                },
-            };
+            const tournament = await TournamentService.getTournamentById(
+                params.id,
+            );
+            if (!tournament) throw new NotFoundError();
+            return tournament;
         },
         {
+            params: t.Object({
+                id: t.String(),
+            }),
             detail: {
                 tags: ['tournaments'],
                 summary: 'Get tournament by ID',
                 description: 'Returns details of a specific tournament',
-                responses: {
-                    200: {
-                        description: 'Tournament details',
-                    },
-                    404: {
-                        description: 'Tournament not found',
-                    },
-                },
             },
-            params: t.Object({
-                id: t.String(),
-            }),
         },
     )
     // Create new tournament
     .post(
         '/',
         async ({ body, set }) => {
-            // Mock response - to be implemented with actual database queries
+            const tournament = await TournamentService.createTournament(body);
             set.status = 201;
-            return {
-                status: 'success',
-                message: 'Tournament created successfully',
-                data: {
-                    id: '3',
-                    ...body,
-                },
-            };
+            return tournament;
         },
         {
-            detail: {
-                tags: ['tournaments'],
-                summary: 'Create tournament',
-                description: 'Creates a new tournament',
-                responses: {
-                    201: {
-                        description: 'Tournament created successfully',
-                    },
-                    400: {
-                        description: 'Invalid input',
-                    },
-                },
-            },
             body: t.Object({
                 name: t.String(),
                 startDate: t.String(),
@@ -116,39 +59,25 @@ export const tournamentRoutes = new Elysia({ prefix: '/tournaments' })
                 location: t.Optional(t.String()),
                 status: t.Optional(t.String({ default: 'upcoming' })),
             }),
+            detail: {
+                tags: ['tournaments'],
+                summary: 'Create tournament',
+                description: 'Creates a new tournament',
+            },
         },
     )
     // Update tournament
     .put(
         '/:id',
         async ({ params, body }) => {
-            // Mock response - to be implemented with actual database queries
-            return {
-                status: 'success',
-                message: 'Tournament updated successfully',
-                data: {
-                    id: params.id,
-                    ...body,
-                },
-            };
+            const tournament = await TournamentService.updateTournament(
+                params.id,
+                body,
+            );
+            if (!tournament) throw new NotFoundError();
+            return tournament;
         },
         {
-            detail: {
-                tags: ['tournaments'],
-                summary: 'Update tournament',
-                description: 'Updates an existing tournament',
-                responses: {
-                    200: {
-                        description: 'Tournament updated successfully',
-                    },
-                    404: {
-                        description: 'Tournament not found',
-                    },
-                    400: {
-                        description: 'Invalid input',
-                    },
-                },
-            },
             params: t.Object({
                 id: t.String(),
             }),
@@ -160,33 +89,30 @@ export const tournamentRoutes = new Elysia({ prefix: '/tournaments' })
                 location: t.Optional(t.String()),
                 status: t.Optional(t.String()),
             }),
+            detail: {
+                tags: ['tournaments'],
+                summary: 'Update tournament',
+                description: 'Updates an existing tournament',
+            },
         },
     )
     // Delete tournament
     .delete(
         '/:id',
         async ({ params, set }) => {
-            // Mock implementation - actually delete the tournament with ID params.id
-            console.log(`Deleting tournament with ID: ${params.id}`);
+            const deleted = await TournamentService.deleteTournament(params.id);
+            if (!deleted) throw new NotFoundError();
             set.status = 204;
             return null;
         },
         {
+            params: t.Object({
+                id: t.String(),
+            }),
             detail: {
                 tags: ['tournaments'],
                 summary: 'Delete tournament',
                 description: 'Deletes an existing tournament',
-                responses: {
-                    204: {
-                        description: 'Tournament deleted successfully',
-                    },
-                    404: {
-                        description: 'Tournament not found',
-                    },
-                },
             },
-            params: t.Object({
-                id: t.String(),
-            }),
         },
     );

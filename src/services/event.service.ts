@@ -2,153 +2,68 @@
  * Event Service
  * Provides functionality for event-related operations using a functional approach
  */
-import { eventConfig } from '../config/event';
 import { redis } from '../redis';
 import type { EventDeadline, EventScores } from '../types/event.type';
-import { cacheOperations } from '../utils';
+import {
+    createCachedFunction,
+    determineCurrentEventAndDeadline,
+    eventKeys,
+    getCurrentSeason,
+    getEventDeadlinesFromRedis,
+} from '../utils';
 
 /**
- * Get current event and next UTC deadline
+ * Get current event and next UTC deadline implementation
  */
-export const getCurrentEventAndDeadline = async (): Promise<EventDeadline> => {
+const getCurrentEventAndDeadlineImpl = async (): Promise<EventDeadline> => {
     try {
-        // Check cache first
-        const cachedData = await cacheOperations.get();
+        // Get current season
+        const season = getCurrentSeason(new Date());
 
-        if (cachedData) {
-            return cachedData;
-        }
+        // Get event deadlines from Redis
+        const redisKey = eventKeys.eventDeadlines(season);
+        const eventDeadlines = await getEventDeadlinesFromRedis(redisKey);
 
-        // Hardcoded values for current event and deadline as specified
-        const event = '29';
-        const utcDeadline = '2025-04-01T17:15:00Z';
-
-        // Return hardcoded values
-        const result: EventDeadline = {
-            event,
-            utcDeadline,
-        };
-
-        // Cache the result
-        await cacheOperations.set(result);
-
-        return result;
+        // Determine current event and deadline
+        return determineCurrentEventAndDeadline(new Date(), eventDeadlines);
     } catch (error) {
         console.error('Failed to get current event and deadline:', error);
-        // Return default values in case of error
-        return {
-            event: '29',
-            utcDeadline: '2025-04-01T17:15:00Z',
-        };
+        throw error;
     }
 };
 
 /**
- * Get event average scores
+ * Get event average scores implementation
  */
-export const getEventAverageScores = async (): Promise<EventScores> => {
+const getEventAverageScoresImpl = async (): Promise<EventScores> => {
     try {
-        // Check cache first
-        const cachedScores = await redis.getJson<EventScores>(
-            eventConfig.cache.averageScoresKey,
-        );
+        // Get current season
+        const season = getCurrentSeason(new Date());
 
-        if (cachedScores && Object.keys(cachedScores).length > 0) {
-            return cachedScores;
+        // Get average scores from Redis
+        const scoresKey = eventKeys.averageScores(season);
+        const averageScores = await redis.getJson<EventScores>(scoresKey);
+
+        if (!averageScores || Object.keys(averageScores).length === 0) {
+            throw new Error('Average scores not found in Redis');
         }
-
-        // Hardcoded event scores as specified
-        const averageScores: Record<string, number> = {
-            '1': 57,
-            '2': 69,
-            '3': 64,
-            '4': 51,
-            '5': 58,
-            '6': 50,
-            '7': 46,
-            '8': 36,
-            '9': 54,
-            '10': 39,
-            '11': 49,
-            '12': 49,
-            '13': 60,
-            '14': 58,
-            '15': 50,
-            '16': 47,
-            '17': 60,
-            '18': 51,
-            '19': 66,
-            '20': 60,
-            '21': 55,
-            '22': 46,
-            '23': 59,
-            '24': 87,
-            '25': 74,
-            '26': 62,
-            '27': 53,
-            '28': 52,
-            '29': 40,
-            '30': 0,
-            '31': 0,
-            '32': 0,
-            '33': 0,
-            '34': 0,
-            '35': 0,
-            '36': 0,
-            '37': 0,
-            '38': 0,
-        };
-
-        // Cache the result
-        await redis.setJson(
-            eventConfig.cache.averageScoresKey,
-            averageScores,
-            eventConfig.cache.averageScoresTtl,
-        );
 
         return averageScores;
     } catch (error) {
         console.error('Failed to get event average scores:', error);
-        // Return default values in case of error
-        return {
-            '1': 57,
-            '2': 69,
-            '3': 64,
-            '4': 51,
-            '5': 58,
-            '6': 50,
-            '7': 46,
-            '8': 36,
-            '9': 54,
-            '10': 39,
-            '11': 49,
-            '12': 49,
-            '13': 60,
-            '14': 58,
-            '15': 50,
-            '16': 47,
-            '17': 60,
-            '18': 51,
-            '19': 66,
-            '20': 60,
-            '21': 55,
-            '22': 46,
-            '23': 59,
-            '24': 87,
-            '25': 74,
-            '26': 62,
-            '27': 53,
-            '28': 52,
-            '29': 40,
-            '30': 0,
-            '31': 0,
-            '32': 0,
-            '33': 0,
-            '34': 0,
-            '35': 0,
-            '36': 0,
-            '37': 0,
-            '38': 0,
-        };
+        throw error;
     }
 };
+
+// Create cached versions of the functions
+export const getCurrentEventAndDeadline = createCachedFunction(
+    'events',
+    'current-with-deadline',
+    getCurrentEventAndDeadlineImpl,
+);
+
+export const getEventAverageScores = createCachedFunction(
+    'events',
+    'average-scores',
+    getEventAverageScoresImpl,
+);

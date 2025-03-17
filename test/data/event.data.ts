@@ -1,4 +1,4 @@
-import { eventConfig } from '../../src/config/event';
+import { eventConfig } from '../../src/config/event.config';
 import type { EventScores } from '../../src/types/event.type';
 
 // Mock data

@@ -3,9 +3,9 @@ import { swagger } from '@elysiajs/swagger';
 import 'dotenv/config';
 import { Elysia } from 'elysia';
 import { HttpStatusCode } from 'elysia-http-status-code';
-import { logger } from './config/logger';
+import { logger } from './config/logger.config';
 import { database } from './db';
-import { httpLoggerMiddleware } from './middlewares/httpLogger';
+import { httpLoggerPlugin } from './plugins/http-logger.plugin';
 import { redis } from './redis';
 import { v1Routes } from './routes/v1';
 
@@ -70,7 +70,7 @@ initConnections().then(() => {
         // Add HTTP status code plugin
         .use(HttpStatusCode())
         // Add HTTP logger middleware
-        .use(httpLoggerMiddleware)
+        .use(httpLoggerPlugin)
         .get('/', ({ set }) => {
             set.headers['Content-Type'] = 'text/html';
             return Bun.file('./public/index.html');

@@ -1,52 +1,44 @@
-import { Elysia } from 'elysia';
+/**
+ * Event Routes
+ * Handles event-related HTTP endpoints
+ */
+import { Elysia, NotFoundError } from 'elysia';
+import { errorHandler } from '../../plugins/error-handler.plugin';
 import * as eventService from '../../services/event.service';
-import { EventDeadline, EventScores } from '../../types/event.type';
+import { EventDeadlineSchema, EventScoresSchema } from '../../types/event.type';
 
 export const eventRoutes = new Elysia({ prefix: '/events' })
+    .use(errorHandler)
     .get(
         '/current-with-deadline',
         async () => {
             const result = await eventService.getCurrentEventAndDeadline();
-
-            // Explicitly construct the response object with the expected type
-            const response: EventDeadline = {
-                event: result.event,
-                utcDeadline: result.utcDeadline,
-            };
-
-            return response;
+            if (!result) throw new NotFoundError();
+            return result;
         },
         {
-            response: EventDeadline,
+            response: EventDeadlineSchema,
             detail: {
                 tags: ['events'],
                 summary: 'Get current event and next deadline',
                 description:
                     'Returns information about the current event and the next UTC deadline',
-                responses: {
-                    200: {
-                        description: 'Current event and deadline information',
-                    },
-                },
             },
         },
     )
     .get(
         '/average-scores',
         async () => {
-            return await eventService.getEventAverageScores();
+            const scores = await eventService.getEventAverageScores();
+            if (!scores) throw new NotFoundError();
+            return scores;
         },
         {
-            response: EventScores,
+            response: EventScoresSchema,
             detail: {
                 tags: ['events'],
                 summary: 'Get event average scores',
-                description: 'Returns average scores for events',
-                responses: {
-                    200: {
-                        description: 'Event average scores',
-                    },
-                },
+                description: 'Returns average scores for all events',
             },
         },
     );

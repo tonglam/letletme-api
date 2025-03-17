@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
-import { dbConfig } from '../config/db';
-import { logger } from '../config/logger';
+import { dbConfig } from '../config/db.config';
+import { logger } from '../config/logger.config';
 import * as schema from './schema/index';
 
 // Create database connection pool - this is a singleton due to module caching

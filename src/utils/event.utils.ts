@@ -1,93 +1,101 @@
 /**
- * Event utilities
+ * Event Utilities
  * Helper functions for event-related operations
  */
-import { eventConfig } from '../config/event';
+import { eventConfig } from '../config/event.config';
 import { redis } from '../redis';
-import type { EventData, EventDeadline } from '../types/event.type';
+import type {
+    EventData,
+    EventDeadline,
+    EventDeadlines,
+} from '../types/event.type';
 
 /**
- * Calculate current season in the format "2324" for 2023-2024
+ * Get event deadlines from Redis
+ * @param redisKey Redis key for event deadlines
+ * @returns Event deadlines object
+ * @throws Error if deadlines not found or invalid
  */
-export const getCurrentSeason = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
+export const getEventDeadlinesFromRedis = async (
+    redisKey: string,
+): Promise<EventDeadlines> => {
+    const eventDeadlines = await redis.getJson<EventDeadlines>(redisKey);
 
-    return month >= eventConfig.season.startMonth
-        ? `${(year % 100).toString()}${((year + 1) % 100).toString().padStart(2, '0')}`
-        : `${((year - 1) % 100).toString()}${(year % 100).toString().padStart(2, '0')}`;
+    if (!eventDeadlines || Object.keys(eventDeadlines).length === 0) {
+        throw new Error('Event deadlines not found in Redis');
+    }
+
+    return eventDeadlines;
 };
 
 /**
- * Determine current event and deadline based on current time
+ * Get current season based on date
+ * @param date Current date
+ * @returns Current season (e.g., "2023-24")
+ */
+export const getCurrentSeason = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // JavaScript months are 0-based
+
+    // If we're in the second half of the year (July onwards), it's the start of a new season
+    if (month >= 7) {
+        return `${year}-${(year + 1).toString().slice(2)}`;
+    }
+    return `${year - 1}-${year.toString().slice(2)}`;
+};
+
+/**
+ * Determine current event and next deadline
+ * @param currentDate Current date
+ * @param eventDeadlines Event deadlines object
+ * @returns Current event and next deadline
  */
 export const determineCurrentEventAndDeadline = (
-    now: Date,
-    eventDeadlines: EventData[],
+    currentDate: Date,
+    eventDeadlines: EventDeadlines,
 ): EventDeadline => {
-    // Sort events by deadline
-    const sortedEvents = [...eventDeadlines].sort(
-        (a, b) =>
-            new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
+    const currentTimestamp = currentDate.getTime();
+    const events = Object.entries(eventDeadlines);
+
+    // Sort events by deadline timestamp
+    const sortedEvents = events.sort(
+        ([, a], [, b]) => new Date(a).getTime() - new Date(b).getTime(),
     );
 
-    const nextEventIndex = sortedEvents.findIndex(
-        (event) => new Date(event.deadline) > now,
+    // Find the next event that hasn't started yet
+    const nextEvent = sortedEvents.find(
+        ([, deadline]) => new Date(deadline).getTime() > currentTimestamp,
     );
 
-    if (nextEventIndex === -1) {
-        // All events are in the past, return the last one
+    if (!nextEvent) {
+        // If no next event found, return the last event
         const lastEvent = sortedEvents[sortedEvents.length - 1];
         return {
-            event: lastEvent.event,
-            utcDeadline: lastEvent.deadline,
+            event: parseInt(lastEvent[0], 10),
+            utcDeadline: lastEvent[1],
         };
     }
 
-    if (nextEventIndex === 0) {
-        // All events are in the future, return the first one
-        return {
-            event: sortedEvents[0].event,
-            utcDeadline: sortedEvents[0].deadline,
-        };
-    }
-
-    // Current event is the one before the next event
+    // If we found a next event, the current event is the previous one
+    const nextEventIndex = parseInt(nextEvent[0], 10);
     return {
-        event: sortedEvents[nextEventIndex - 1].event,
-        utcDeadline: sortedEvents[nextEventIndex].deadline,
+        event: nextEventIndex - 1,
+        utcDeadline: nextEvent[1],
     };
 };
 
 /**
  * Transform Redis hash data to event array
+ * @param redisData Redis hash data
+ * @returns Array of event data objects
  */
 export const transformRedisData = (
     redisData: Record<string, string>,
 ): EventData[] => {
     return Object.entries(redisData).map(([event, deadline]) => ({
-        event,
+        event: parseInt(event, 10),
         deadline,
     }));
-};
-
-/**
- * Get event deadlines from Redis
- */
-export const getEventDeadlinesFromRedis = async (
-    redisKey: string,
-): Promise<EventData[]> => {
-    try {
-        const data = await redis.getClient().hgetall(redisKey);
-
-        if (!data || Object.keys(data).length === 0) {
-            throw new Error(`No event data found for key: ${redisKey}`);
-        }
-
-        return transformRedisData(data);
-    } catch (error) {
-        throw new Error(`Failed to retrieve event deadlines: ${error}`);
-    }
 };
 
 /**
@@ -121,4 +129,45 @@ export const cacheOperations = {
             throw new Error(`Cache clear error: ${error}`);
         }
     },
+};
+
+/**
+ * Event utility functions
+ */
+
+/**
+ * Get current event from Redis
+ */
+export const getCurrentEvent = async (): Promise<number | null> => {
+    try {
+        const currentEvent = await redis.getJson<{ event: number }>(
+            'current-event',
+        );
+        return currentEvent?.event || null;
+    } catch (error) {
+        console.error('Error getting current event:', error);
+        return null;
+    }
+};
+
+/**
+ * Get next event based on current event
+ */
+export const getNextEvent = async (
+    currentEvent: number,
+): Promise<number | null> => {
+    try {
+        // Get total events from Redis
+        const totalEvents = await redis.getJson<number>('total-events');
+        if (!totalEvents) {
+            return null;
+        }
+
+        // Calculate next event
+        const nextEvent = currentEvent + 1;
+        return nextEvent <= totalEvents ? nextEvent : null;
+    } catch (error) {
+        console.error('Error getting next event:', error);
+        return null;
+    }
 };
