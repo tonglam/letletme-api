@@ -2,6 +2,10 @@
  * System Service
  * Provides functionality for system-related operations
  */
+import { logger } from '../config/logger.config';
+import { database } from '../db';
+import { cacheRedis, dataRedis } from '../redis';
+
 export class SystemService {
     /**
      * Check system health
@@ -12,20 +16,46 @@ export class SystemService {
         timestamp: string;
         services: {
             database: string;
-            redis: string;
+            dataRedis: string;
+            cacheRedis: string;
         };
     }> {
-        // Mock implementation - to be replaced with actual health checks
-        // In a real implementation, we would check the database and Redis connections
-        const dbStatus = true; // await database.checkConnection();
-        const redisStatus = true; // redis.getClient().status === 'ready';
+        // Check database and Redis connections
+        let dbStatus = false;
+        let dataRedisStatus = false;
+        let cacheRedisStatus = false;
+
+        try {
+            dbStatus = await database.checkConnection();
+        } catch (err) {
+            logger.error({ err }, 'Database health check error');
+        }
+
+        try {
+            const dataPing = await dataRedis.ping();
+            dataRedisStatus = dataPing === 'PONG';
+        } catch (err) {
+            logger.error({ err }, 'Data Redis health check error');
+        }
+
+        try {
+            const cachePing = await cacheRedis.ping();
+            cacheRedisStatus = cachePing === 'PONG';
+        } catch (err) {
+            logger.error({ err }, 'Cache Redis health check error');
+        }
+
+        // Determine overall status
+        const allServicesHealthy =
+            dbStatus && dataRedisStatus && cacheRedisStatus;
 
         return {
-            status: 'ok',
+            status: allServicesHealthy ? 'ok' : 'degraded',
             timestamp: new Date().toISOString(),
             services: {
                 database: dbStatus ? 'healthy' : 'unhealthy',
-                redis: redisStatus ? 'healthy' : 'unhealthy',
+                dataRedis: dataRedisStatus ? 'healthy' : 'unhealthy',
+                cacheRedis: cacheRedisStatus ? 'healthy' : 'unhealthy',
             },
         };
     }

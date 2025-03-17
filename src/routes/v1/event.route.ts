@@ -1,69 +1,42 @@
-import { Elysia, t } from 'elysia';
-import { EventService } from '../../services';
-import { EventDeadline, EventScores } from '../../types';
+/**
+ * Event Routes
+ * Handles event-related HTTP endpoints
+ */
+import { Elysia } from 'elysia';
+import { errorHandler } from '../../plugins/error-handler.plugin';
+import * as eventService from '../../services/event.service';
+import { EventDeadlineSchema, EventScoresSchema } from '../../types/event.type';
 
 export const eventRoutes = new Elysia({ prefix: '/events' })
+    .use(errorHandler)
     .get(
         '/current-with-deadline',
-        () => EventService.getCurrentEventAndDeadline(),
+        async () => {
+            const result = await eventService.getCurrentEventAndDeadline();
+            return result || { event: null, nextDeadline: null };
+        },
         {
-            response: EventDeadline,
+            response: EventDeadlineSchema,
             detail: {
                 tags: ['events'],
                 summary: 'Get current event and next deadline',
                 description:
                     'Returns information about the current event and the next UTC deadline',
-                responses: {
-                    200: {
-                        description: 'Current event and deadline information',
-                    },
-                },
             },
         },
     )
-    .post('/refresh', () => EventService.refreshEventAndDeadline(), {
-        response: t.Void(),
-        detail: {
-            tags: ['events'],
-            summary: 'Refresh event and deadline',
-            description: 'Refreshes the current event and deadline information',
-            responses: {
-                200: {
-                    description: 'Event and deadline refreshed successfully',
-                },
-            },
+    .get(
+        '/average-scores',
+        async () => {
+            const scores = await eventService.getEventAverageScores();
+            return scores || { scores: {} };
         },
-    })
-    .post(
-        '/:event/cache',
-        ({ params }) => EventService.insertEventLiveCache(params.event),
         {
-            params: t.Object({
-                event: t.Number(),
-            }),
-            response: t.Void(),
+            response: EventScoresSchema,
             detail: {
                 tags: ['events'],
-                summary: 'Insert event live cache',
-                description: 'Inserts live cache data for a specific event',
-                responses: {
-                    200: {
-                        description: 'Event live cache inserted successfully',
-                    },
-                },
+                summary: 'Get event average scores',
+                description: 'Returns average scores for all events',
             },
         },
-    )
-    .get('/average-scores', () => EventService.getEventAverageScores(), {
-        response: EventScores,
-        detail: {
-            tags: ['events'],
-            summary: 'Get event average scores',
-            description: 'Returns average scores for events',
-            responses: {
-                200: {
-                    description: 'Event average scores',
-                },
-            },
-        },
-    });
+    );

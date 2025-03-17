@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { logPaths } from '../../src/config/logger.js';
+import { logPaths } from '../../src/config/logger.config.js';
 
 interface LogEntry {
     msg: string;

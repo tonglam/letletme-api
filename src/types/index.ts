@@ -14,3 +14,6 @@ export * from './event.type';
 
 // Statistics types
 export * from './statistics.type';
+
+// Player types
+export * from './player.type';

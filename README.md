@@ -1,6 +1,46 @@
-# LetLetMe API
+# Fantasy Premier League API
 
-A simple REST API built with Elysia.js and Drizzle ORM.
+A RESTful API for Fantasy Premier League data built with Elysia.js and Bun.
+
+## Features
+
+- Current event and deadline information
+- Fixtures for the next gameweek
+- Team information
+- Player statistics
+- League standings
+
+## Redis Configuration
+
+This application uses two separate Redis instances:
+
+1. **Data Redis (Read-Only)**
+
+    - Used for accessing application data
+    - Configured with `REDIS_*` environment variables
+    - This is a read-only replica and should not be written to
+
+2. **Cache Redis (Read/Write)**
+    - Used exclusively for caching
+    - Configured with `CACHE_REDIS_*` environment variables
+    - Requires write access
+
+Make sure both Redis instances are properly configured in your environment.
+
+## Getting Started
+
+1. Clone the repository
+2. Copy `.env.example` to `.env` and configure your environment
+3. Install dependencies: `bun install`
+4. Run the development server: `bun dev`
+
+## API Documentation
+
+API documentation is available at `/swagger` when the server is running.
+
+## Testing
+
+Run tests with: `bun test`
 
 ## Tech Stack
 
@@ -11,51 +51,6 @@ A simple REST API built with Elysia.js and Drizzle ORM.
 - **Logging**: [Pino](https://getpino.io/) for structured logging with file rotation
 - **Caching**: [Redis](https://redis.io/) for high-performance caching
 - **Documentation**: Swagger via @elysiajs/swagger plugin
-
-## Features
-
-- User management (CRUD operations)
-- MySQL database integration with Drizzle ORM
-- Swagger documentation
-- Structured logging with Pino
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ or Bun 1.0+
-- MySQL database
-
-### Installation
-
-1. Clone the repository
-2. Install dependencies:
-
-```bash
-bun install
-```
-
-3. Configure environment variables:
-
-Copy the `.env.example` file to `.env` and update the values:
-
-```bash
-cp .env.example .env
-```
-
-1. Set up the database:
-
-```bash
-bun run db:setup
-```
-
-### Running the API
-
-```bash
-bun run dev
-```
-
-The API will be available at <http://localhost:3000> and the Swagger documentation at <http://localhost:3000/swagger>.
 
 ## Database Management
 

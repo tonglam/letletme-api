@@ -10,7 +10,11 @@ import {
 } from 'bun:test';
 import fs from 'fs';
 import path from 'path';
-import { config, createModuleLogger, logPaths } from '../src/config/logger.js';
+import {
+    config,
+    createModuleLogger,
+    logPaths,
+} from '../../src/config/logger.config.js';
 
 describe('Logger Configuration', () => {
     const originalEnv = { ...process.env };

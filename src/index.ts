@@ -3,24 +3,31 @@ import { swagger } from '@elysiajs/swagger';
 import 'dotenv/config';
 import { Elysia } from 'elysia';
 import { HttpStatusCode } from 'elysia-http-status-code';
-import { logger } from './config/logger';
+import { logger } from './config/logger.config';
 import { database } from './db';
-import { httpLoggerMiddleware } from './middlewares/httpLogger';
-import { redis } from './redis';
+import { httpLoggerPlugin } from './plugins/http-logger.plugin';
+import { cacheRedis, dataRedis } from './redis';
 import { v1Routes } from './routes/v1';
 
 // Initialize connections
 const initConnections = async (): Promise<void> => {
-    // Initialize Redis connection
-    redis.getClient();
-    logger.info('Redis connection initialized');
+    try {
+        // Initialize Redis connections
+        await dataRedis.ping();
+        logger.info('Data Redis connection initialized');
 
-    // Check database connection
-    const dbConnected = await database.checkConnection();
-    if (dbConnected) {
-        logger.info('Database connection initialized');
-    } else {
-        logger.error('Failed to connect to database');
+        await cacheRedis.ping();
+        logger.info('Cache Redis connection initialized');
+
+        // Check database connection
+        const dbConnected = await database.checkConnection();
+        if (dbConnected) {
+            logger.info('Database connection initialized');
+        } else {
+            throw new Error('Failed to connect to database');
+        }
+    } catch (err) {
+        logger.error({ err }, 'Failed to initialize connections');
         process.exit(1);
     }
 };
@@ -29,6 +36,8 @@ const initConnections = async (): Promise<void> => {
 initConnections().then(() => {
     // Create the main application
     const app = new Elysia()
+        // Add HTTP logger middleware first
+        .use(httpLoggerPlugin)
         .use(
             swagger({
                 documentation: {
@@ -69,8 +78,6 @@ initConnections().then(() => {
         )
         // Add HTTP status code plugin
         .use(HttpStatusCode())
-        // Add HTTP logger middleware
-        .use(httpLoggerMiddleware)
         .get('/', ({ set }) => {
             set.headers['Content-Type'] = 'text/html';
             return Bun.file('./public/index.html');
@@ -89,19 +96,24 @@ const gracefulShutdown = async (): Promise<void> => {
     logger.info('Shutting down...');
 
     try {
-        // Close Redis connection
-        await redis.close();
-        logger.info('Redis connection closed');
+        // Close Redis connections
+        await dataRedis.close();
+        logger.info('Data Redis connection closed');
+
+        await cacheRedis.close();
+        logger.info('Cache Redis connection closed');
 
         // Close database connection
         await database.closeDbConnection();
         logger.info('Database connection closed');
-    } catch (error) {
-        logger.error('Error during shutdown', { error });
+    } catch (err) {
+        logger.error({ err }, 'Error during shutdown');
+        process.exit(1);
     }
 
     process.exit(0);
 };
 
+// Handle process signals for graceful shutdown
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);

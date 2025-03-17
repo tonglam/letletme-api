@@ -1,399 +1,219 @@
 /**
  * Fixture Service
- * Provides functionality for fixture-related operations
+ * Handles fixture-related operations using a functional approach
  */
-export class FixtureService {
-    /**
-     * Get next fixture for a specific event
-     * @param eventId Event ID
-     * @returns Next fixture information
-     */
-    static async getNextFixture(eventId: number): Promise<
-        Array<{
-            id: number;
-            event: number;
-            homeTeam: string;
-            awayTeam: string;
-            kickoffTime: string;
-        }>
-    > {
-        // Mock implementation - to be replaced with actual database queries
-        return Array(3)
-            .fill(0)
-            .map((_, i) => ({
-                id: i + 1,
-                event: eventId,
-                homeTeam: `Team ${i * 2 + 1}`,
-                awayTeam: `Team ${i * 2 + 2}`,
-                kickoffTime: new Date(
-                    Date.now() + (i + 1) * 86400000,
-                ).toISOString(),
-            }));
+import { logger } from '../config/logger.config';
+import { dataRedis } from '../redis';
+import type { Fixture, NextGameweekFixture } from '../types/fixture.type';
+import { createCachedFunction } from '../utils/cache.utils';
+import {
+    getCurrentEvent,
+    getCurrentSeason,
+    getNextEvent,
+} from '../utils/event.utils';
+import { ServiceName, eventKeys } from '../utils/redis-key.utils';
+import { getTeamNames } from '../utils/team.utils';
+
+/**
+ * Get fixtures for the next gameweek
+ */
+const getNextGameweekFixturesImpl = async (): Promise<
+    NextGameweekFixture[]
+> => {
+    // Get current event and season
+    const currentEvent = await getCurrentEvent();
+    logger.info({ currentEvent }, 'Current event from getCurrentEvent');
+    if (!currentEvent) {
+        logger.warn('Current event not found');
+        return [];
     }
 
-    /**
-     * Get fixture details
-     * @param id Fixture ID
-     * @returns Fixture details
-     */
-    static async getFixtureById(id: string): Promise<{
-        status: string;
-        data: {
-            id: string;
-            eventId: number;
-            leagueId: string;
-            leagueName: string;
-            round: string;
-            homeTeam: {
-                id: string;
-                name: string;
-                logo: string;
-                coach: string;
-                formation: string;
-                startingXI: Array<{
-                    id: string;
-                    name: string;
-                    number: number;
-                    position: string;
-                }>;
-                substitutes: Array<{
-                    id: string;
-                    name: string;
-                    number: number;
-                    position: string;
-                }>;
-            };
-            awayTeam: {
-                id: string;
-                name: string;
-                logo: string;
-                coach: string;
-                formation: string;
-                startingXI: Array<{
-                    id: string;
-                    name: string;
-                    number: number;
-                    position: string;
-                }>;
-                substitutes: Array<{
-                    id: string;
-                    name: string;
-                    number: number;
-                    position: string;
-                }>;
-            };
-            date: string;
-            time: string;
-            venue: string;
-            status: string;
-            score: {
-                halftime: {
-                    home: number | null;
-                    away: number | null;
+    // Calculate next event
+    const nextEvent = await getNextEvent(currentEvent);
+    logger.info({ nextEvent }, 'Next event calculated');
+    if (!nextEvent) {
+        logger.warn('Next event not found');
+        return [];
+    }
+
+    // Get fixtures from Redis using the correct key format
+    const season = getCurrentSeason();
+    const fixtureKey = eventKeys.eventFixtures(season, nextEvent);
+    logger.info({ fixtureKey, season }, 'Fixture key generated');
+
+    // Get all members from the set
+    const fixturesSet = await dataRedis.smembers(fixtureKey);
+    logger.info({ fixturesSet }, 'Fixtures set from Redis');
+    if (!fixturesSet || fixturesSet.length === 0) {
+        logger.warn({ fixtureKey }, 'No fixtures found in Redis');
+        return [];
+    }
+
+    // Get team names using the utility function
+    const teamNames = await getTeamNames();
+    logger.info({ teamNames }, 'Team names from Redis');
+
+    // Parse the fixtures from the set
+    const fixtures: Fixture[] = [];
+    for (const fixtureJson of fixturesSet) {
+        try {
+            const parsed = JSON.parse(fixtureJson);
+            logger.info({ parsed }, 'Parsed fixture JSON');
+            // Handle Java object format
+            if (Array.isArray(parsed) && parsed.length > 1 && parsed[1]) {
+                const javaObject = parsed[1];
+                logger.info({ javaObject }, 'Java object from parsed fixture');
+                // Map Java object to our Fixture type
+                const fixture: Fixture = {
+                    id: javaObject.id,
+                    event: javaObject.event,
+                    team_h: javaObject.teamH,
+                    team_a: javaObject.teamA,
+                    team_h_score: javaObject.teamHScore,
+                    team_a_score: javaObject.teamAScore,
+                    kickoff_time: javaObject.kickoffTime,
+                    started: javaObject.started,
+                    finished: javaObject.finished,
+                    difficulty: javaObject.teamHDifficulty, // Use home team difficulty as default
                 };
-                fulltime: {
-                    home: number | null;
-                    away: number | null;
-                };
-                extratime: {
-                    home: number | null;
-                    away: number | null;
-                };
-                penalty: {
-                    home: number | null;
-                    away: number | null;
-                };
-            };
-            events: Array<{
-                time: {
-                    elapsed: number;
-                    extra?: number;
-                };
-                team: {
-                    id: string;
-                    name: string;
-                    logo: string;
-                };
-                player: {
-                    id: string;
-                    name: string;
-                };
-                type: string;
-                detail: string;
-            }>;
-            statistics: Array<{
-                team: {
-                    id: string;
-                    name: string;
-                    logo: string;
-                };
-                statistics: Array<{
-                    type: string;
-                    value: number | string;
-                }>;
-            }>;
-        };
-    }> {
-        // Mock implementation - to be replaced with actual database queries
-        return {
-            status: 'success',
-            data: {
-                id,
-                eventId: 1,
-                leagueId: '1',
-                leagueName: 'Premier League',
-                round: 'Regular Season - 28',
-                homeTeam: {
-                    id: 'team1',
-                    name: 'Team 1',
-                    logo: 'https://example.com/logos/team1.png',
-                    coach: 'John Smith',
-                    formation: '4-3-3',
-                    startingXI: Array(11)
-                        .fill(0)
-                        .map((_, i) => ({
-                            id: `player${i + 1}`,
-                            name: `Player ${i + 1}`,
-                            number: i + 1,
-                            position:
-                                i === 0 ? 'G' : i < 5 ? 'D' : i < 8 ? 'M' : 'F',
-                        })),
-                    substitutes: Array(7)
-                        .fill(0)
-                        .map((_, i) => ({
-                            id: `player${i + 12}`,
-                            name: `Player ${i + 12}`,
-                            number: i + 12,
-                            position:
-                                i < 1 ? 'G' : i < 3 ? 'D' : i < 5 ? 'M' : 'F',
-                        })),
+                logger.info({ fixture }, 'Mapped fixture');
+                fixtures.push(fixture);
+            }
+        } catch (parseErr) {
+            logger.error(
+                { parseErr, fixtureJson },
+                'Failed to parse fixture JSON',
+            );
+        }
+    }
+    logger.info({ fixtures }, 'Parsed fixtures');
+
+    // Transform fixtures to NextGameweekFixture format
+    const nextGameweekFixtures = fixtures.flatMap(
+        (fixture): NextGameweekFixture[] => {
+            const homeTeamId = fixture.team_h.toString();
+            const awayTeamId = fixture.team_a.toString();
+            const homeTeamName = teamNames[homeTeamId];
+            const awayTeamName = teamNames[awayTeamId];
+            const homeTeamShort = teamNames[`${homeTeamId}_short`];
+            const awayTeamShort = teamNames[`${awayTeamId}_short`];
+
+            logger.info(
+                {
+                    fixture,
+                    homeTeamId,
+                    awayTeamId,
+                    homeTeamName,
+                    awayTeamName,
+                    homeTeamShort,
+                    awayTeamShort,
                 },
-                awayTeam: {
-                    id: 'team2',
-                    name: 'Team 2',
-                    logo: 'https://example.com/logos/team2.png',
-                    coach: 'Jane Doe',
-                    formation: '4-4-2',
-                    startingXI: Array(11)
-                        .fill(0)
-                        .map((_, i) => ({
-                            id: `player${i + 20}`,
-                            name: `Player ${i + 20}`,
-                            number: i + 1,
-                            position:
-                                i === 0 ? 'G' : i < 5 ? 'D' : i < 9 ? 'M' : 'F',
-                        })),
-                    substitutes: Array(7)
-                        .fill(0)
-                        .map((_, i) => ({
-                            id: `player${i + 31}`,
-                            name: `Player ${i + 31}`,
-                            number: i + 12,
-                            position:
-                                i < 1 ? 'G' : i < 3 ? 'D' : i < 5 ? 'M' : 'F',
-                        })),
-                },
-                date: new Date().toISOString().split('T')[0],
-                time: '15:00',
-                venue: 'Stadium 1',
-                status: 'scheduled',
-                score: {
-                    halftime: {
-                        home: null,
-                        away: null,
-                    },
-                    fulltime: {
-                        home: null,
-                        away: null,
-                    },
-                    extratime: {
-                        home: null,
-                        away: null,
-                    },
-                    penalty: {
-                        home: null,
-                        away: null,
-                    },
-                },
-                events: [],
-                statistics: [
+                'Team names for fixture',
+            );
+
+            // Skip fixtures where we don't have team names
+            if (
+                !homeTeamName ||
+                !awayTeamName ||
+                !homeTeamShort ||
+                !awayTeamShort
+            ) {
+                logger.warn(
                     {
-                        team: {
-                            id: 'team1',
-                            name: 'Team 1',
-                            logo: 'https://example.com/logos/team1.png',
-                        },
-                        statistics: [
-                            {
-                                type: 'Shots on Goal',
-                                value: 0,
-                            },
-                            {
-                                type: 'Shots off Goal',
-                                value: 0,
-                            },
-                            {
-                                type: 'Possession',
-                                value: '50%',
-                            },
-                        ],
+                        fixture,
+                        homeTeamId,
+                        awayTeamId,
+                        homeTeamName,
+                        awayTeamName,
+                        homeTeamShort,
+                        awayTeamShort,
                     },
-                    {
-                        team: {
-                            id: 'team2',
-                            name: 'Team 2',
-                            logo: 'https://example.com/logos/team2.png',
-                        },
-                        statistics: [
-                            {
-                                type: 'Shots on Goal',
-                                value: 0,
-                            },
-                            {
-                                type: 'Shots off Goal',
-                                value: 0,
-                            },
-                            {
-                                type: 'Possession',
-                                value: '50%',
-                            },
-                        ],
-                    },
-                ],
-            },
-        };
-    }
+                    'Missing team names for fixture',
+                );
+                return [];
+            }
 
-    /**
-     * Get fixtures by date
-     * @param date Date in YYYY-MM-DD format
-     * @param leagueId Optional league ID to filter fixtures
-     * @returns List of fixtures for the specified date
-     */
-    static async getFixturesByDate(
-        date: string,
-        leagueId?: string,
-    ): Promise<{
-        status: string;
-        data: Array<{
-            id: string;
-            leagueId: string;
-            leagueName: string;
-            date: string;
-            time: string;
-            status: string;
-            homeTeam: {
-                id: string;
-                name: string;
-                logo: string;
+            // Create home team fixture
+            const homeFixture: NextGameweekFixture = {
+                event: fixture.event,
+                teamId: fixture.team_h,
+                teamName: homeTeamName,
+                teamShortName: homeTeamShort,
+                againstTeamId: fixture.team_a,
+                againstTeamName: awayTeamName,
+                againstTeamShortName: awayTeamShort,
+                difficulty: fixture.difficulty || 0,
+                kickoffTime: fixture.kickoff_time,
+                started: fixture.started,
+                finished: fixture.finished,
+                wasHome: true,
+                teamScore: fixture.team_h_score || 0,
+                againstTeamScore: fixture.team_a_score || 0,
+                score: `${fixture.team_h_score || 0}-${fixture.team_a_score || 0}`,
+                result: getResult(fixture.team_h_score, fixture.team_a_score),
+                bgw: false,
+                dgw: false,
             };
-            awayTeam: {
-                id: string;
-                name: string;
-                logo: string;
-            };
-            score: {
-                home: number | null;
-                away: number | null;
-            };
-            venue: string;
-        }>;
-    }> {
-        // Mock implementation - to be replaced with actual database queries
-        const fixtures = Array(8)
-            .fill(0)
-            .map((_, i) => ({
-                id: `fixture${i + 1}`,
-                leagueId: i < 5 ? '1' : '2',
-                leagueName: i < 5 ? 'Premier League' : 'Championship',
-                date,
-                time: `${12 + Math.floor(i / 2)}:${i % 2 === 0 ? '00' : '30'}`,
-                status: i < 3 ? 'finished' : i < 5 ? 'in_play' : 'scheduled',
-                homeTeam: {
-                    id: `team${i * 2 + 1}`,
-                    name: `Team ${i * 2 + 1}`,
-                    logo: `https://example.com/logos/team${i * 2 + 1}.png`,
-                },
-                awayTeam: {
-                    id: `team${i * 2 + 2}`,
-                    name: `Team ${i * 2 + 2}`,
-                    logo: `https://example.com/logos/team${i * 2 + 2}.png`,
-                },
-                score: {
-                    home:
-                        i < 3
-                            ? Math.floor(Math.random() * 4)
-                            : i < 5
-                              ? Math.floor(Math.random() * 3)
-                              : null,
-                    away:
-                        i < 3
-                            ? Math.floor(Math.random() * 3)
-                            : i < 5
-                              ? Math.floor(Math.random() * 2)
-                              : null,
-                },
-                venue: `Stadium ${i + 1}`,
-            }));
 
-        // Filter by league if specified
-        const filteredFixtures = leagueId
-            ? fixtures.filter((fixture) => fixture.leagueId === leagueId)
-            : fixtures;
-
-        return {
-            status: 'success',
-            data: filteredFixtures,
-        };
-    }
-
-    /**
-     * Update fixture status and score
-     * @param id Fixture ID
-     * @param updateData Update data
-     * @returns Updated fixture
-     */
-    static async updateFixture(
-        id: string,
-        updateData: {
-            status?: string;
-            score?: {
-                home: number;
-                away: number;
+            // Create away team fixture
+            const awayFixture: NextGameweekFixture = {
+                event: fixture.event,
+                teamId: fixture.team_a,
+                teamName: awayTeamName,
+                teamShortName: awayTeamShort,
+                againstTeamId: fixture.team_h,
+                againstTeamName: homeTeamName,
+                againstTeamShortName: homeTeamShort,
+                difficulty: fixture.difficulty || 0,
+                kickoffTime: fixture.kickoff_time,
+                started: fixture.started,
+                finished: fixture.finished,
+                wasHome: false,
+                teamScore: fixture.team_a_score || 0,
+                againstTeamScore: fixture.team_h_score || 0,
+                score: `${fixture.team_a_score || 0}-${fixture.team_h_score || 0}`,
+                result: getResult(fixture.team_a_score, fixture.team_h_score),
+                bgw: false,
+                dgw: false,
             };
-            events?: Array<{
-                time: {
-                    elapsed: number;
-                    extra?: number;
-                };
-                teamId: string;
-                playerId: string;
-                type: string;
-                detail: string;
-            }>;
+
+            logger.info({ homeFixture, awayFixture }, 'Created fixtures');
+            return [homeFixture, awayFixture];
         },
-    ): Promise<{
-        status: string;
-        message: string;
-        data: {
-            id: string;
-            status?: string;
-            score?: {
-                home: number;
-                away: number;
-            };
-            updatedAt: string;
-        };
-    }> {
-        // Mock implementation - to be replaced with actual database queries
-        return {
-            status: 'success',
-            message: 'Fixture updated successfully',
-            data: {
-                id,
-                ...updateData,
-                updatedAt: new Date().toISOString(),
-            },
-        };
+    );
+
+    logger.info({ nextGameweekFixtures }, 'Final next gameweek fixtures');
+    return nextGameweekFixtures;
+};
+
+/**
+ * Helper function to determine the result of a fixture
+ */
+const getResult = (
+    teamScore: number | undefined | null,
+    againstTeamScore: number | undefined | null,
+): string => {
+    if (
+        teamScore === undefined ||
+        teamScore === null ||
+        againstTeamScore === undefined ||
+        againstTeamScore === null
+    ) {
+        return '';
     }
-}
+
+    if (teamScore > againstTeamScore) {
+        return 'W';
+    } else if (teamScore < againstTeamScore) {
+        return 'L';
+    } else {
+        return 'D';
+    }
+};
+
+// Create cached version of the function
+export const getNextGameweekFixtures = createCachedFunction(
+    ServiceName.EVENT_FIXTURE,
+    'next-gameweek',
+    getNextGameweekFixturesImpl,
+);

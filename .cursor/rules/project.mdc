@@ -12,6 +12,7 @@ alwaysApply: true
 ## Services
 - Place service logic in `src/services/<resourceService>.ts`.
 - Match or create resource folders accordingly.
+- Check `src/utils` before create a helper function.
 
 ## Models
 - Define models using `Elysia.t` in `src/models.ts` or resource-specific files.
@@ -74,6 +75,14 @@ alwaysApply: true
 
 ## Type Integrity
 - Avoid passing full context types; rely on Elysia’s inference capabilities.
+- Before create a type, always check `types/` first.
 
 ## Document
 - Check `https://elysiajs.com/essential/best-practice` if necessary or you are not sure.
+
+# Principle
+- Priority functions not classes. Only create a class when there is no other way.
+
+# Redis
+- When fetching original data, use the data redis client.
+- When caching the api response, use the cache redis client.
