@@ -5,8 +5,8 @@ import { t } from 'elysia';
  * Information about event deadlines
  */
 export const EventDeadline = t.Object({
-    currentEvent: t.String(),
-    nextDeadline: t.String(),
+    event: t.String(),
+    utcDeadline: t.String(),
 });
 
 /**

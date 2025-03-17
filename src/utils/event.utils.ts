@@ -39,23 +39,23 @@ export const determineCurrentEventAndDeadline = (
         // All events are in the past, return the last one
         const lastEvent = sortedEvents[sortedEvents.length - 1];
         return {
-            currentEvent: lastEvent.event,
-            nextDeadline: lastEvent.deadline,
+            event: lastEvent.event,
+            utcDeadline: lastEvent.deadline,
         };
     }
 
     if (nextEventIndex === 0) {
         // All events are in the future, return the first one
         return {
-            currentEvent: sortedEvents[0].event,
-            nextDeadline: sortedEvents[0].deadline,
+            event: sortedEvents[0].event,
+            utcDeadline: sortedEvents[0].deadline,
         };
     }
 
     // Current event is the one before the next event
     return {
-        currentEvent: sortedEvents[nextEventIndex - 1].event,
-        nextDeadline: sortedEvents[nextEventIndex].deadline,
+        event: sortedEvents[nextEventIndex - 1].event,
+        utcDeadline: sortedEvents[nextEventIndex].deadline,
     };
 };
 

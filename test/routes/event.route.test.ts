@@ -6,10 +6,7 @@ import { EXPECTED_SCORES, MOCK_EVENT_DEADLINES } from '../data/event.data';
 describe('Event Routes', () => {
     // Spy on event service functions
     let getCurrentEventAndDeadlineSpy: ReturnType<typeof spyOn>;
-    let refreshEventAndDeadlineSpy: ReturnType<typeof spyOn>;
-    let insertEventLiveCacheSpy: ReturnType<typeof spyOn>;
     let getEventAverageScoresSpy: ReturnType<typeof spyOn>;
-    let refreshEventAverageScoresSpy: ReturnType<typeof spyOn>;
 
     beforeEach(() => {
         // Mock event service functions
@@ -17,38 +14,20 @@ describe('Event Routes', () => {
             eventService,
             'getCurrentEventAndDeadline',
         ).mockImplementation(async () => ({
-            currentEvent: '3',
-            nextDeadline: MOCK_EVENT_DEADLINES['4'],
+            event: '3',
+            utcDeadline: MOCK_EVENT_DEADLINES['4'],
         }));
-
-        refreshEventAndDeadlineSpy = spyOn(
-            eventService,
-            'refreshEventAndDeadline',
-        ).mockImplementation(async () => {});
-
-        insertEventLiveCacheSpy = spyOn(
-            eventService,
-            'insertEventLiveCache',
-        ).mockImplementation(async () => {});
 
         getEventAverageScoresSpy = spyOn(
             eventService,
             'getEventAverageScores',
         ).mockImplementation(async () => EXPECTED_SCORES);
-
-        refreshEventAverageScoresSpy = spyOn(
-            eventService,
-            'refreshEventAverageScores',
-        ).mockImplementation(async () => {});
     });
 
     afterEach(() => {
         // Restore original implementations
         getCurrentEventAndDeadlineSpy.mockRestore();
-        refreshEventAndDeadlineSpy.mockRestore();
-        insertEventLiveCacheSpy.mockRestore();
         getEventAverageScoresSpy.mockRestore();
-        refreshEventAverageScoresSpy.mockRestore();
     });
 
     describe('GET /events/current-with-deadline', () => {
@@ -62,42 +41,10 @@ describe('Event Routes', () => {
                 .then((res) => res.json());
 
             expect(response).toEqual({
-                currentEvent: '3',
-                nextDeadline: MOCK_EVENT_DEADLINES['4'],
+                event: '3',
+                utcDeadline: MOCK_EVENT_DEADLINES['4'],
             });
             expect(getCurrentEventAndDeadlineSpy).toHaveBeenCalledTimes(1);
-        });
-    });
-
-    describe('POST /events/refresh', () => {
-        it('should refresh event and deadline', async () => {
-            const response = await eventRoutes
-                .handle(
-                    new Request('http://localhost/events/refresh', {
-                        method: 'POST',
-                    }),
-                )
-                .then((res) => res.status);
-
-            expect(response).toBe(200);
-            expect(refreshEventAndDeadlineSpy).toHaveBeenCalledTimes(1);
-        });
-    });
-
-    describe('POST /events/:event/cache', () => {
-        it('should insert event live cache', async () => {
-            const eventId = 3;
-            const response = await eventRoutes
-                .handle(
-                    new Request(`http://localhost/events/${eventId}/cache`, {
-                        method: 'POST',
-                    }),
-                )
-                .then((res) => res.status);
-
-            expect(response).toBe(200);
-            expect(insertEventLiveCacheSpy).toHaveBeenCalledTimes(1);
-            expect(insertEventLiveCacheSpy).toHaveBeenCalledWith(eventId);
         });
     });
 
@@ -109,24 +56,6 @@ describe('Event Routes', () => {
 
             expect(response).toEqual(EXPECTED_SCORES);
             expect(getEventAverageScoresSpy).toHaveBeenCalledTimes(1);
-        });
-    });
-
-    describe('POST /events/average-scores/refresh', () => {
-        it('should refresh event average scores cache', async () => {
-            const response = await eventRoutes
-                .handle(
-                    new Request(
-                        'http://localhost/events/average-scores/refresh',
-                        {
-                            method: 'POST',
-                        },
-                    ),
-                )
-                .then((res) => res.status);
-
-            expect(response).toBe(200);
-            expect(refreshEventAverageScoresSpy).toHaveBeenCalledTimes(1);
         });
     });
 });
