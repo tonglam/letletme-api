@@ -19,6 +19,7 @@ export type RedisOperations = {
     ttl(key: string): Promise<number>;
     ping(): Promise<string>;
     smembers(key: string): Promise<string[]>;
+    scan(pattern: string): Promise<string[]>;
 };
 
 /**
@@ -115,5 +116,20 @@ export const createRedisOperations = (
     // Set operations
     async smembers(key: string): Promise<string[]> {
         return getClient().smembers(key);
+    },
+
+    // Scan operation with pattern matching
+    async scan(pattern: string): Promise<string[]> {
+        const client = getClient();
+        const stream = client.scanStream({
+            match: pattern,
+            count: 100,
+        });
+
+        const keys: string[] = [];
+        for await (const resultKeys of stream) {
+            keys.push(...resultKeys);
+        }
+        return keys;
     },
 });

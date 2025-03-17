@@ -36,6 +36,8 @@ const initConnections = async (): Promise<void> => {
 initConnections().then(() => {
     // Create the main application
     const app = new Elysia()
+        // Add HTTP logger middleware first
+        .use(httpLoggerPlugin)
         .use(
             swagger({
                 documentation: {
@@ -76,8 +78,6 @@ initConnections().then(() => {
         )
         // Add HTTP status code plugin
         .use(HttpStatusCode())
-        // Add HTTP logger middleware
-        .use(httpLoggerPlugin)
         .get('/', ({ set }) => {
             set.headers['Content-Type'] = 'text/html';
             return Bun.file('./public/index.html');

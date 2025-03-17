@@ -28,7 +28,7 @@ export const redisCacheConfig: RedisCacheConfig = {
  * Cache service names for TTL rules
  */
 export enum CacheServiceName {
-    EVENT = 'event',
+    EVENTS = 'events',
     FIXTURE = 'fixture',
     TEAM = 'team',
     PLAYER = 'player',
@@ -46,7 +46,7 @@ export type ServiceTTLRules = Record<CacheServiceName, number>;
  * Service-specific TTL configurations (in seconds)
  */
 export const serviceTTLRules: ServiceTTLRules = {
-    [CacheServiceName.EVENT]: 60, // 1 minute
+    [CacheServiceName.EVENTS]: 60, // 1 minute
     [CacheServiceName.FIXTURE]: 300, // 5 minutes
     [CacheServiceName.TEAM]: 86400, // 24 hours
     [CacheServiceName.PLAYER]: 3600, // 1 hour
@@ -85,7 +85,7 @@ export const getCacheConfig = (path: string): CacheConfig => {
 
     // Map cache service name to ServiceName
     const cacheServiceMap: Record<CacheServiceName, ServiceName> = {
-        [CacheServiceName.EVENT]: ServiceName.EVENT,
+        [CacheServiceName.EVENTS]: ServiceName.EVENT,
         [CacheServiceName.FIXTURE]: ServiceName.EVENT_FIXTURE,
         [CacheServiceName.TEAM]: ServiceName.TEAM,
         [CacheServiceName.PLAYER]: ServiceName.PLAYER,

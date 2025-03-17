@@ -10,6 +10,18 @@ let client: Redis | null = null;
 
 const getClient = (): Redis => {
     if (!client) {
+        // Log Redis configuration
+        logger.info(
+            {
+                host: redisCacheConfig.host,
+                port: redisCacheConfig.port,
+                db: redisCacheConfig.db,
+                hasPassword: !!redisCacheConfig.password,
+                password: redisCacheConfig.password,
+            },
+            'Cache Redis configuration',
+        );
+
         client = new Redis({
             host: redisCacheConfig.host,
             port: redisCacheConfig.port,
@@ -20,6 +32,13 @@ const getClient = (): Redis => {
                 logger.error({ err }, 'Cache Redis connection error');
                 return true; // Auto-reconnect
             },
+            retryStrategy: (times): number => {
+                logger.info({ times }, 'Cache Redis retry attempt');
+                return Math.min(times * 100, 3000); // Maximum 3 seconds delay
+            },
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: true,
+            showFriendlyErrorStack: true,
         });
 
         // Setup event listeners
@@ -28,7 +47,26 @@ const getClient = (): Redis => {
         });
 
         client.on('connect', () => {
-            logger.info('Connected to Cache Redis server');
+            logger.info(
+                {
+                    host: redisCacheConfig.host,
+                    port: redisCacheConfig.port,
+                    db: redisCacheConfig.db,
+                },
+                'Connected to Cache Redis server',
+            );
+        });
+
+        client.on('ready', () => {
+            logger.info('Cache Redis client is ready');
+        });
+
+        client.on('reconnecting', () => {
+            logger.info('Cache Redis client is reconnecting');
+        });
+
+        client.on('end', () => {
+            logger.info('Cache Redis connection ended');
         });
     }
     return client;
