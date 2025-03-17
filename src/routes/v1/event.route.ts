@@ -2,7 +2,7 @@
  * Event Routes
  * Handles event-related HTTP endpoints
  */
-import { Elysia, NotFoundError } from 'elysia';
+import { Elysia } from 'elysia';
 import { errorHandler } from '../../plugins/error-handler.plugin';
 import * as eventService from '../../services/event.service';
 import { EventDeadlineSchema, EventScoresSchema } from '../../types/event.type';
@@ -13,8 +13,7 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
         '/current-with-deadline',
         async () => {
             const result = await eventService.getCurrentEventAndDeadline();
-            if (!result) throw new NotFoundError();
-            return result;
+            return result || { event: null, nextDeadline: null };
         },
         {
             response: EventDeadlineSchema,
@@ -30,8 +29,7 @@ export const eventRoutes = new Elysia({ prefix: '/events' })
         '/average-scores',
         async () => {
             const scores = await eventService.getEventAverageScores();
-            if (!scores) throw new NotFoundError();
-            return scores;
+            return scores || { scores: [] };
         },
         {
             response: EventScoresSchema,

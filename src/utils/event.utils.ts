@@ -4,25 +4,33 @@
  */
 import { eventConfig } from '../config/event.config';
 import { redis } from '../redis';
-import type {
-    EventData,
-    EventDeadline,
-    EventDeadlines,
-} from '../types/event.type';
+import type { EventDeadline, EventDeadlines } from '../types/event.type';
+import { eventKeys } from './redis-key.utils';
+
+/**
+ * Get data from Redis with error handling
+ */
+const getRedisData = async <T>(key: string): Promise<T | null> => {
+    try {
+        return await redis.getJson<T>(key);
+    } catch (error) {
+        console.error(`Error getting data from Redis (${key}):`, error);
+        return null;
+    }
+};
 
 /**
  * Get event deadlines from Redis
- * @param redisKey Redis key for event deadlines
- * @returns Event deadlines object
- * @throws Error if deadlines not found or invalid
  */
 export const getEventDeadlinesFromRedis = async (
-    redisKey: string,
+    season: string = getCurrentSeason(),
 ): Promise<EventDeadlines> => {
-    const eventDeadlines = await redis.getJson<EventDeadlines>(redisKey);
+    const eventDeadlines = await getRedisData<EventDeadlines>(
+        eventKeys.eventDeadlines(season),
+    );
 
     if (!eventDeadlines || Object.keys(eventDeadlines).length === 0) {
-        throw new Error('Event deadlines not found in Redis');
+        throw new Error(`Event deadlines not found for season ${season}`);
     }
 
     return eventDeadlines;
@@ -30,15 +38,12 @@ export const getEventDeadlinesFromRedis = async (
 
 /**
  * Get current season based on date
- * @param date Current date
- * @returns Current season (e.g., "2023-24")
  */
-export const getCurrentSeason = (date: Date): string => {
+export const getCurrentSeason = (date: Date = new Date()): string => {
     const year = date.getFullYear();
-    const month = date.getMonth() + 1; // JavaScript months are 0-based
+    const month = date.getMonth() + 1;
 
-    // If we're in the second half of the year (July onwards), it's the start of a new season
-    if (month >= 7) {
+    if (month >= eventConfig.season.startMonth) {
         return `${year}-${(year + 1).toString().slice(2)}`;
     }
     return `${year - 1}-${year.toString().slice(2)}`;
@@ -46,9 +51,6 @@ export const getCurrentSeason = (date: Date): string => {
 
 /**
  * Determine current event and next deadline
- * @param currentDate Current date
- * @param eventDeadlines Event deadlines object
- * @returns Current event and next deadline
  */
 export const determineCurrentEventAndDeadline = (
     currentDate: Date,
@@ -56,19 +58,15 @@ export const determineCurrentEventAndDeadline = (
 ): EventDeadline => {
     const currentTimestamp = currentDate.getTime();
     const events = Object.entries(eventDeadlines);
-
-    // Sort events by deadline timestamp
     const sortedEvents = events.sort(
         ([, a], [, b]) => new Date(a).getTime() - new Date(b).getTime(),
     );
 
-    // Find the next event that hasn't started yet
     const nextEvent = sortedEvents.find(
         ([, deadline]) => new Date(deadline).getTime() > currentTimestamp,
     );
 
     if (!nextEvent) {
-        // If no next event found, return the last event
         const lastEvent = sortedEvents[sortedEvents.length - 1];
         return {
             event: parseInt(lastEvent[0], 10),
@@ -76,7 +74,6 @@ export const determineCurrentEventAndDeadline = (
         };
     }
 
-    // If we found a next event, the current event is the previous one
     const nextEventIndex = parseInt(nextEvent[0], 10);
     return {
         event: nextEventIndex - 1,
@@ -85,67 +82,58 @@ export const determineCurrentEventAndDeadline = (
 };
 
 /**
- * Transform Redis hash data to event array
- * @param redisData Redis hash data
- * @returns Array of event data objects
+ * Cache operations for current event
  */
-export const transformRedisData = (
-    redisData: Record<string, string>,
-): EventData[] => {
-    return Object.entries(redisData).map(([event, deadline]) => ({
-        event: parseInt(event, 10),
-        deadline,
-    }));
-};
-
-/**
- * Cache operations
- */
-export const cacheOperations = {
-    get: async (): Promise<EventDeadline | null> => {
+export const currentEventCache = {
+    get: async (): Promise<number | null> => {
         try {
-            return await redis.getJson<EventDeadline>(eventConfig.cache.key);
+            const data = await redis.getJson<{ event: number }>(
+                eventKeys.currentEvent(),
+            );
+            return data?.event || null;
         } catch (error) {
-            throw new Error(`Cache read error: ${error}`);
+            console.error('Cache read error:', error);
+            return null;
         }
     },
 
-    set: async (data: EventDeadline): Promise<void> => {
+    set: async (event: number): Promise<void> => {
         try {
             await redis.setJson(
-                eventConfig.cache.key,
-                data,
+                eventKeys.currentEvent(),
+                { event },
                 eventConfig.cache.ttl,
             );
         } catch (error) {
-            throw new Error(`Cache write error: ${error}`);
-        }
-    },
-
-    clear: async (): Promise<void> => {
-        try {
-            await redis.del(eventConfig.cache.key);
-        } catch (error) {
-            throw new Error(`Cache clear error: ${error}`);
+            console.error('Cache write error:', error);
         }
     },
 };
 
 /**
- * Event utility functions
- */
-
-/**
- * Get current event from Redis
+ * Get and cache current event
  */
 export const getCurrentEvent = async (): Promise<number | null> => {
+    // Try to get from cache first
+    const cachedEvent = await currentEventCache.get();
+    if (cachedEvent !== null) {
+        return cachedEvent;
+    }
+
+    // Calculate current event from deadlines
     try {
-        const currentEvent = await redis.getJson<{ event: number }>(
-            'current-event',
+        const eventDeadlines = await getEventDeadlinesFromRedis();
+        const currentDate = new Date();
+        const { event } = determineCurrentEventAndDeadline(
+            currentDate,
+            eventDeadlines,
         );
-        return currentEvent?.event || null;
+
+        // Cache the calculated event
+        await currentEventCache.set(event);
+        return event;
     } catch (error) {
-        console.error('Error getting current event:', error);
+        console.error('Error calculating current event:', error);
         return null;
     }
 };
@@ -156,18 +144,6 @@ export const getCurrentEvent = async (): Promise<number | null> => {
 export const getNextEvent = async (
     currentEvent: number,
 ): Promise<number | null> => {
-    try {
-        // Get total events from Redis
-        const totalEvents = await redis.getJson<number>('total-events');
-        if (!totalEvents) {
-            return null;
-        }
-
-        // Calculate next event
-        const nextEvent = currentEvent + 1;
-        return nextEvent <= totalEvents ? nextEvent : null;
-    } catch (error) {
-        console.error('Error getting next event:', error);
-        return null;
-    }
+    const nextEvent = currentEvent + 1;
+    return nextEvent <= eventConfig.season.totalEvents ? nextEvent : null;
 };
